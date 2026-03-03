@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoodBook SS.API", "FoodBook
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoodBook SS.Web", "FoodBook SS.Web\FoodBook SS.Web.csproj", "{BC873B16-5259-410C-9D2C-BBE419CAD5A7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoodBook SS.Persistence", "FoodBook SS.Persistence\FoodBook SS.Persistence.csproj", "{FAA066DA-529F-41DE-A62D-BBB9F140B510}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -49,6 +51,10 @@ Global
 		{BC873B16-5259-410C-9D2C-BBE419CAD5A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BC873B16-5259-410C-9D2C-BBE419CAD5A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BC873B16-5259-410C-9D2C-BBE419CAD5A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FAA066DA-529F-41DE-A62D-BBB9F140B510}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FAA066DA-529F-41DE-A62D-BBB9F140B510}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FAA066DA-529F-41DE-A62D-BBB9F140B510}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FAA066DA-529F-41DE-A62D-BBB9F140B510}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -59,6 +65,7 @@ Global
 		{34EB5587-F8CE-4053-9916-A759E8EE4230} = {30D05428-5386-45BC-96CF-4DF3906D7ED7}
 		{965EC344-D202-4647-84B5-DC0F4ADA20CC} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{BC873B16-5259-410C-9D2C-BBE419CAD5A7} = {47973103-EED2-46C6-A8E1-6193A1F9DD67}
+		{FAA066DA-529F-41DE-A62D-BBB9F140B510} = {30D05428-5386-45BC-96CF-4DF3906D7ED7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6558EF56-54A7-428D-B39F-B2AF50277F9A}

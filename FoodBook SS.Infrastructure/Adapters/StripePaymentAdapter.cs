@@ -8,5 +8,6 @@ namespace FoodBook_SS.Infrastructure.Adapters
 {
     internal class StripePaymentAdapter
     {
+
     }
 }

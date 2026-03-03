@@ -1,12 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace FoodBook_SS.Domain.Base
 {
-    internal class OperationResult
+    public class OperationResult
     {
+        public OperationResult()
+        {
+            this.Success = true;
+        }
+        public bool Success { get; set; } = true;
+        public string Message { get; set; } = string.Empty;
+        public object? Data { get; set; }
+
+        public static OperationResult Ok(string message = "") =>
+            new OperationResult { Success = true, Message = message };
+
+        public static OperationResult Fail(string message) =>
+            new OperationResult { Success = false, Message = message };
     }
 }
