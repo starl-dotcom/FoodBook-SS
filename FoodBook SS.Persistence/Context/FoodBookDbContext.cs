@@ -1,6 +1,5 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
-
 using FoodBook_SS.Domain.Entities.Configuration;
 using FoodBook_SS.Domain.Entities.Order;
 using FoodBook_SS.Domain.Entities.Payment;
