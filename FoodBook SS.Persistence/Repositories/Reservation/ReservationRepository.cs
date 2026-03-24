@@ -115,8 +115,32 @@ namespace FoodBook_SS.Persistence.Repositories.Reservation
             return OperationResult.Ok("Reserva cancelada.");
         }
 
-        public Task<OperationResult> CompletarReservaAsync(int reservaId, int actorId) =>
-            CambiarEstadoAsync(reservaId, EstadoReserva.Completada, actorId);
+
+        public async Task<OperationResult> CompletarReservaAsync(int reservaId, int actorId)
+        {
+            var reserva = await _context.Reservas.FindAsync(reservaId);
+            if (reserva is null) return OperationResult.Fail("Reserva no encontrada.");
+
+            reserva.Estado = EstadoReserva.Completada;
+            reserva.ModificadoPor = actorId;
+            reserva.ActualizadoEn = DateTime.UtcNow;
+
+            var ordenes = await _context.Ordenes
+                .Where(o => o.ReservaId == reservaId &&
+                            (o.Estado == EstadoOrden.Confirmada ||
+                             o.Estado == EstadoOrden.EnPreparacion ||
+                             o.Estado == EstadoOrden.Lista))
+                .ToListAsync();
+
+            foreach (var orden in ordenes)
+            {
+                orden.Estado = EstadoOrden.Entregada;
+                orden.ActualizadoEn = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+            return OperationResult.Ok("Reserva marcada como Completada.");
+        }
 
         public Task<OperationResult> MarcarNoShowAsync(int reservaId, int actorId) =>
             CambiarEstadoAsync(reservaId, EstadoReserva.NoShow, actorId);

@@ -22,7 +22,10 @@ namespace FoodBook_SS.API.Controllers
         [Authorize(Roles = "Propietario,Administrador")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] SaveRestaurantDto dto)
-            => RespondCreated(nameof(GetById), await _service.SaveAsync(dto));
+        {
+            var result = await _service.CreateAsync(dto, ObtenerUsuarioId());
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
 
         [Authorize(Roles = "Propietario,Administrador")]
         [HttpPut("{id:int}")]

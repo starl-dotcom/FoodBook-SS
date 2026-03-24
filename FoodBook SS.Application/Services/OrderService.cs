@@ -32,13 +32,13 @@ namespace FoodBook_SS.Application.Services
 
         public async Task<OperationResult> SaveAsync(SaveOrderDto dto) => await CreateAsync(dto, 0);
 
-        
         public async Task<OperationResult> CreateAsync(SaveOrderDto dto, int clienteId)
         {
             var orden = new Orden
             {
                 ReservaId = dto.ReservaId,
                 ClienteId = clienteId,
+                RestauranteId = dto.RestauranteId,
                 Notas = dto.Notas,
                 Estado = EstadoOrden.Pendiente
             };
@@ -79,7 +79,6 @@ namespace FoodBook_SS.Application.Services
             return r;
         }
 
-        
         public Task<OperationResult> AddItemAsync(int ordenId, SaveOrderItemDto item, int actorId) =>
             AgregarItemAsync(ordenId, item);
 
@@ -90,7 +89,6 @@ namespace FoodBook_SS.Application.Services
             return r;
         }
 
-        
         public Task<OperationResult> RemoveItemAsync(int itemId, int actorId) =>
             _repo.RemoveItemAsync(itemId);
 

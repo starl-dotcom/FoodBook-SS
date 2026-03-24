@@ -22,15 +22,16 @@ namespace FoodBook_SS.Application.Interfaces
         Task<OperationResult> ActivarDesactivarAsync(int usuarioId, bool activo, int actorId);
     }
 
-    
+
     public interface IRestaurantService : IBaseService<RestaurantDto, SaveRestaurantDto, UpdateRestaurantDto>
     {
         Task<OperationResult> GetByPropietarioAsync(int propietarioId);
         Task<OperationResult> SearchAsync(string? nombre, string? ciudad, string? tipoCocina);
         Task<OperationResult> BuscarAsync(string? ciudad, string? tipoCocina, string? termino);
+        Task<OperationResult> CreateAsync(SaveRestaurantDto dto, int propietarioId);
     }
 
-    
+
     public interface IReservationService : IBaseService<ReservationDto, SaveReservationDto, UpdateReservationDto>
     {
         Task<OperationResult> GetByClienteAsync(int clienteId);

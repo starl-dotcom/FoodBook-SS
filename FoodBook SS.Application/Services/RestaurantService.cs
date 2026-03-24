@@ -18,7 +18,6 @@ namespace FoodBook_SS.Application.Services
         public Task<OperationResult> SearchAsync(string? nombre, string? ciudad, string? tipoCocina) =>
             _repo.SearchAsync(nombre, ciudad, tipoCocina);
 
-        
         public Task<OperationResult> BuscarAsync(string? ciudad, string? tipoCocina, string? termino) =>
             _repo.SearchAsync(termino, ciudad, tipoCocina);
 
@@ -32,6 +31,22 @@ namespace FoodBook_SS.Application.Services
         {
             var r = new Restaurante
             {
+                Nombre = dto.Nombre,
+                Descripcion = dto.Descripcion,
+                TipoCocina = dto.TipoCocina,
+                Direccion = dto.Direccion,
+                Ciudad = dto.Ciudad,
+                Telefono = dto.Telefono,
+                RangoPrecio = dto.RangoPrecio
+            };
+            return await _repo.SaveEntityAsync(r);
+        }
+
+        public async Task<OperationResult> CreateAsync(SaveRestaurantDto dto, int propietarioId)
+        {
+            var r = new Restaurante
+            {
+                PropietarioId = propietarioId,
                 Nombre = dto.Nombre,
                 Descripcion = dto.Descripcion,
                 TipoCocina = dto.TipoCocina,

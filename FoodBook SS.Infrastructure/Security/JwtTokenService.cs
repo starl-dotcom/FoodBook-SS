@@ -7,6 +7,7 @@ using FoodBook_SS.Domain.Repository;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
+
 namespace FoodBook_SS.Infrastructure.Security
 {
     public class JwtTokenService : IJwtTokenService
@@ -14,12 +15,14 @@ namespace FoodBook_SS.Infrastructure.Security
         private readonly string _secret;
         private readonly string _issuer;
         private readonly int _expiresMinutes;
+        private readonly string _audience;
 
         public JwtTokenService(IConfiguration config)
         {
             _secret = config["Jwt:Secret"] ?? throw new InvalidOperationException("Jwt:Secret no configurado.");
             _issuer = config["Jwt:Issuer"] ?? "FoodBookPro";
             _expiresMinutes = int.Parse(config["Jwt:ExpiresMinutes"] ?? "60");
+            _audience = config["Jwt:Audience"] ?? "FoodBookProUsers";
         }
 
         public (string Token, string RefreshToken, DateTime ExpiresAt) Generate(Usuario usuario)
@@ -38,6 +41,7 @@ namespace FoodBook_SS.Infrastructure.Security
 
             var token = new JwtSecurityToken(
                 issuer: _issuer,
+                audience: _audience,
                 claims: claims,
                 expires: expiresAt,
                 signingCredentials: creds);

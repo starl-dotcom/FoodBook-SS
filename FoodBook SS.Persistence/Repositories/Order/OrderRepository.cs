@@ -36,11 +36,11 @@ namespace FoodBook_SS.Persistence.Repositories.Order
             return OperationResult.Ok(data: lista);
         }
 
-        public async Task<OperationResult> GetOrdenEntregadaParaResenaAsync(int clienteId, int reservaId)
+        public async Task<OperationResult> GetOrdenEntregadaParaResenaAsync(int clienteId, int ordenId)
         {
             var orden = await _context.Ordenes
                 .FirstOrDefaultAsync(o => o.ClienteId == clienteId &&
-                                          o.ReservaId == reservaId &&
+                                          o.Id == ordenId &&
                                           o.Estado == EstadoOrden.Entregada);
             return OperationResult.Ok(data: orden);
         }

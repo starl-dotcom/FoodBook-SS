@@ -19,7 +19,6 @@ namespace FoodBook_SS.Application.Services
         public Task<OperationResult> GetProductosByRestauranteAsync(int rid) =>
             _repo.GetProductosByRestauranteAsync(rid);
 
-        
         public Task<OperationResult> GetProductosByRestauranteAsync(int rid, bool soloDisponibles) =>
             _repo.GetProductosByRestauranteAsync(rid, soloDisponibles);
 
@@ -66,7 +65,13 @@ namespace FoodBook_SS.Application.Services
         {
             var p = await _repo.GetProductoByIdAsync(id);
             if (p is null) return OperationResult.Fail("Producto no encontrado.");
-            return await _repo.CambiarDisponibilidadAsync(id, !p.Disponible, actorId);
+            var nuevoEstado = !p.Disponible;
+            var result = await _repo.CambiarDisponibilidadAsync(id, nuevoEstado, actorId);
+            if (!result.Success) return result;
+            return OperationResult.Ok(
+                new { productoId = id, disponible = nuevoEstado },
+                nuevoEstado ? "Producto activado correctamente." : "Producto desactivado correctamente."
+            );
         }
     }
 }
