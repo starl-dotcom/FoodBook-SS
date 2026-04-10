@@ -1,0 +1,69 @@
+@model IEnumerable<FoodBook_SS.Application.Dtos.User.UserDto>
+@{
+    ViewData["Title"] = "Gestión de Usuarios";
+}
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2>👥 Usuarios registrados</h2>
+        <p class="text-dim">Administra el acceso de clientes y propietarios</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">← Volver</a>
+</div>
+
+<div class="card border-0 shadow-sm overflow-hidden" style="background: var(--card-bg);">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-darker">
+                <tr>
+                    <th class="ps-4">Usuario</th>
+                    <th>Email</th>
+                    <th>Rol</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-end pe-4">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in Model.OrderBy(x => x.Email))
+                {
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm me-3 bg-secondary rounded-circle d-flex align-items-center justify-content-center">
+                                    @(u.NombreCompleto.Length > 0 ? u.NombreCompleto[0] : '?')
+                                </div>
+                                <div>
+                                    <div class="font-bold">@u.NombreCompleto</div>
+                                    <small class="text-dim">ID: #@u.Id</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>@u.Email</td>
+                        <td>
+                            @if (u.RolId == 3) { <span class="badge bg-danger">👑 Administrador</span> }
+                            else if (u.RolId == 2) { <span class="badge bg-info">🏪 Propietario</span> }
+                            else { <span class="badge bg-secondary">👤 Cliente</span> }
+                        </td>
+                        <td class="text-center">
+                            @if (u.Activo) { <span class="badge bg-success">Activo</span> }
+                            else { <span class="badge bg-danger">Bloqueado</span> }
+                        </td>
+                        <td class="text-end pe-4">
+                            @if (u.Id != (ViewBag.CurrentUserId ?? 0))
+                            {
+                                <form asp-action="ToggleUsuario" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input name="usuarioId" type="hidden" value="@u.Id" />
+                                    <input name="activo" type="hidden" value="@(!u.Activo ? "true" : "false")" />
+                                    <button type="submit" class="btn btn-sm @(u.Activo ? "btn-outline-danger" : "btn-outline-success")">
+                                        @(u.Activo ? "🚫 Bloquear" : "✅ Activar")
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

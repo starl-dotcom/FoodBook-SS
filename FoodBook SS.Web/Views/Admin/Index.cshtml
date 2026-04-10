@@ -1,0 +1,71 @@
+@{
+    ViewData["Title"] = "Panel de Administración Global";
+}
+
+<div class="page-header">
+    <h2>🛠️ Administración Global</h2>
+    <p class="text-dim">Supervisión completa de la plataforma FoodBook SS</p>
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-md-6 col-lg-3">
+        <a asp-action="Usuarios" class="card h-100 text-decoration-none hover-lift border-0 shadow-sm" style="background: var(--card-bg);">
+            <div class="card-body text-center py-5">
+                <div class="display-3 mb-3">👥</div>
+                <h4 class="text-white">Usuarios</h4>
+                <p class="text-dim small m-0">Gestionar cuentas y accesos</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <a asp-action="Restaurantes" class="card h-100 text-decoration-none hover-lift border-0 shadow-sm" style="background: var(--card-bg);">
+            <div class="card-body text-center py-5">
+                <div class="display-3 mb-3">🏢</div>
+                <h4 class="text-white">Restaurantes</h4>
+                <p class="text-dim small m-0">Aprobar y supervisar locales</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <a asp-action="Moderacion" class="card h-100 text-decoration-none hover-lift border-0 shadow-sm" style="background: var(--card-bg);">
+            <div class="card-body text-center py-5">
+                <div class="display-3 mb-3">🛡️</div>
+                <h4 class="text-white">Moderación</h4>
+                <p class="text-dim small m-0">Control global de reseñas</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <a asp-action="Auditoria" class="card h-100 text-decoration-none hover-lift border-0 shadow-sm" style="background: var(--card-bg);">
+            <div class="card-body text-center py-5">
+                <div class="display-3 mb-3">📜</div>
+                <h4 class="text-white">Auditoría</h4>
+                <p class="text-dim small m-0">Historial de transacciones</p>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="card mt-5 border-0 shadow-sm" style="background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px);">
+    <div class="card-body py-4">
+        <h5 class="mb-4">📊 Estado Global de la Plataforma</h5>
+        <div class="row text-center g-3">
+            <div class="col-6 col-md-3 border-end border-secondary">
+                <div class="h3 font-bold text-accent">RD$ @string.Format("{0:N0}", ViewBag.TotalVentas ?? 0)</div>
+                <div class="text-dim x-small">Ventas Totales</div>
+            </div>
+             <div class="col-6 col-md-3 border-end border-secondary">
+                <div class="h3 font-bold text-success">@(ViewBag.ReservasActivas ?? 0)</div>
+                <div class="text-dim x-small">Reservas Activas</div>
+            </div>
+             <div class="col-6 col-md-3 border-end border-secondary">
+                <div class="h3 font-bold text-warning">@(ViewBag.ResenasPendientes ?? 0)</div>
+                <div class="text-dim x-small">Reseñas Pendientes</div>
+            </div>
+             <div class="col-6 col-md-3">
+                <div class="h3 font-bold text-info">@(ViewBag.UsuariosActivos ?? 0)</div>
+                <div class="text-dim x-small">Usuarios Registrados</div>
+            </div>
+        </div>
+    </div>
+</div>

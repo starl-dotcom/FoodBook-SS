@@ -1,0 +1,185 @@
+@model IEnumerable<FoodBook_SS.Domain.Entities.Reservation.Reserva>
+@{
+    ViewData["Title"] = "Reservas del Día";
+    var reservas     = Model?.ToList() ?? new List<FoodBook_SS.Domain.Entities.Reservation.Reserva>();
+    var restId       = (int)(ViewBag.RestauranteId ?? 0);
+    var restaurantes = ViewBag.Restaurantes as List<FoodBook_SS.Application.Dtos.Restaurant.RestaurantDto>
+                       ?? new List<FoodBook_SS.Application.Dtos.Restaurant.RestaurantDto>();
+
+    var pendientes  = reservas.Count(r => r.Estado == "Pendiente");
+    var confirmadas = reservas.Count(r => r.Estado == "Confirmada");
+    var noShow      = reservas.Count(r => r.Estado == "NoShow");
+}
+
+<div class="page-header">
+    <h2>📅 Reservas del Día — @DateTime.Today.ToString("dddd, dd/MM/yyyy")</h2>
+</div>
+
+
+
+@* Selector restaurante + filtro estado *@
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label">Restaurante</label>
+                <select name="restauranteId" class="form-select" onchange="this.form.submit()" id="selectorRestaurante">
+                    @foreach (var r in restaurantes)
+                    {
+                        <option value="@r.Id" selected="@(restId == r.Id)">@r.Nombre</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Filtrar por estado</label>
+                <select name="estado" class="form-select" id="filtroEstado">
+                    <option value="">— Todos —</option>
+                    @foreach (var e in new[] { "Pendiente", "Confirmada", "Completada", "NoShow" })
+                    {
+                    <option value="@e" selected="@(ViewBag.EstadoFiltro == e)">@e</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100" id="btnFiltrarReservas">Filtrar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (restId == 0)
+{
+    <div class="alert alert-info">Selecciona un restaurante para ver las reservas de hoy.</div>
+}
+else
+{
+    @* KPIs *@
+    <div class="row g-3 mb-4">
+        <div class="col-sm-4">
+            <div class="kpi-card kpi-warning">
+                <div class="kpi-label">Pendientes</div>
+                <div class="kpi-value" id="kpiPendientes">@pendientes</div>
+                <div class="kpi-icon">⏳</div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="kpi-card kpi-success">
+                <div class="kpi-label">Confirmadas</div>
+                <div class="kpi-value" id="kpiConfirmadas">@confirmadas</div>
+                <div class="kpi-icon">✅</div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="kpi-card kpi-info">
+                <div class="kpi-label">No Show</div>
+                <div class="kpi-value" id="kpiNoShow">@noShow</div>
+                <div class="kpi-icon">🚫</div>
+            </div>
+        </div>
+    </div>
+
+    @if (!reservas.Any())
+    {
+        <div class="alert alert-info">No hay reservas para hoy con los filtros seleccionados.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle" id="tablaReservasDelDia">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Cliente</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Personas</th>
+                        <th>Mesa</th>
+                        <th>Estado</th>
+                        <th>Operaciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in reservas.OrderBy(x => x.FechaReserva).ThenBy(x => x.HoraReserva))
+                    {
+                        var badge = r.Estado switch
+                        {
+                            "Confirmada" => "success",
+                            "Pendiente"  => "warning",
+                            "Completada" => "secondary",
+                            "NoShow"     => "info",
+                            "Cancelada"  => "danger",
+                            _            => "dark"
+                        };
+                        var esFutura = r.FechaReserva > DateOnly.FromDateTime(DateTime.Today);
+                        <tr class="@(esFutura ? "opacity-75" : "")">
+                            <td><code>@r.CodigoConfirmacion</code></td>
+                            <td>@(r.Cliente?.Nombre != null ? r.Cliente.Nombre + " " + r.Cliente.Apellido : "—")</td>
+                            <td>
+                                @r.FechaReserva.ToString("dd/MM/yyyy")
+                                @if (esFutura)
+                                {
+                                    <span class="badge bg-info ms-1" style="font-size:.7rem;">Futura</span>
+                                }
+                            </td>
+                            <td>@r.HoraReserva.ToString("hh\\:mm")</td>
+                            <td class="text-center">@r.NumeroPersonas</td>
+                            <td>@(r.Mesa?.NumeroMesa ?? "—")</td>
+                            <td><span class="badge bg-@badge">@r.Estado</span></td>
+                            <td>
+                                <div class="d-flex gap-1 flex-wrap">
+                                    @if (r.Estado == "Pendiente")
+                                    {
+                                        <form asp-action="ConfirmarReserva" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input name="reservaId"    type="hidden" value="@r.Id" />
+                                            <input name="restauranteId" type="hidden" value="@restId" />
+                                            <button type="submit" class="btn btn-sm btn-primary"
+                                                    id="btnConfirmarRD_@r.Id">✔ Confirmar</button>
+                                        </form>
+                                        <form asp-action="CancelarReserva" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input name="reservaId"    type="hidden" value="@r.Id" />
+                                            <input name="restauranteId" type="hidden" value="@restId" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                    id="btnCancelarPendRD_@r.Id">✖ Cancelar</button>
+                                        </form>
+                                    }
+                                    @if (r.Estado == "Confirmada")
+                                    {
+                                        <form asp-action="CompletarReserva" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input name="reservaId"    type="hidden" value="@r.Id" />
+                                            <input name="restauranteId" type="hidden" value="@restId" />
+                                            <button type="submit" class="btn btn-sm btn-outline-success"
+                                                    id="btnCompletarRD_@r.Id">✅ Completar</button>
+                                        </form>
+                                        <form asp-action="NoShowReserva" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input name="reservaId"    type="hidden" value="@r.Id" />
+                                            <input name="restauranteId" type="hidden" value="@restId" />
+                                            <button type="submit" class="btn btn-sm btn-outline-warning"
+                                                    id="btnNoShowRD_@r.Id">🚫 No Show</button>
+                                        </form>
+                                        <form asp-action="CancelarReserva" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input name="reservaId"    type="hidden" value="@r.Id" />
+                                            <input name="restauranteId" type="hidden" value="@restId" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                    id="btnCancelarConfRD_@r.Id" 
+                                                    onclick="return confirm('¿Seguro que deseas cancelar esta reserva confirmada?');">✖ Cancelar</button>
+                                        </form>
+                                    }
+                                    @if (r.Estado is "Completada" or "NoShow" or "Cancelada")
+                                    {
+                                        <span class="text-dim" style="font-size:.8rem;">Sin acciones</span>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+

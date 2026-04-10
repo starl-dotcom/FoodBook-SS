@@ -1,0 +1,89 @@
+@model IEnumerable<FoodBook_SS.Domain.Entities.Review.Resena>
+@{
+    ViewData["Title"] = "Gestión de Reseñas";
+    int restauranteId = ViewBag.RestauranteId ?? 0;
+}
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2>💬 Reseñas de Clientes</h2>
+        <p class="text-dim">Escucha a tus comensales y responde a sus comentarios</p>
+    </div>
+    <div class="d-flex gap-2">
+        <select class="form-select bg-dark text-white border-secondary" style="width: auto;" 
+                onchange="location.href='?restauranteId=' + this.value">
+            @foreach (var r in (IEnumerable<FoodBook_SS.Application.Dtos.Restaurant.RestaurantDto>)ViewBag.Restaurantes)
+            {
+                <!option value="@r.Id" @(r.Id == restauranteId ? "selected" : "")>@r.Nombre</!option>
+            }
+        </select>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="text-center py-5 card border-0 shadow-sm" style="background: var(--card-bg);">
+        <div class="display-1 mb-3">🤫</div>
+        <h3>Sin reseñas aún</h3>
+        <p class="text-dim">Las opiniones de tus clientes aparecerán aquí.</p>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var r in Model.OrderByDescending(x => x.CreadoEn))
+        {
+            <div class="col-12">
+                <div class="card border-0 shadow-sm" style="background: var(--card-bg);">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <div class="font-bold">@r.Cliente?.Nombre @r.Cliente?.Apellido</div>
+                                <div class="text-warning small">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        <span>@(i <= r.Calificacion ? "★" : "☆")</span>
+                                    }
+                                    <span class="text-dim ms-2">@r.CreadoEn.ToString("dd MMM yyyy")</span>
+                                </div>
+                            </div>
+                            @if (!r.Visible)
+                            {
+                                <span class="badge bg-danger">Oculta por moderación</span>
+                            }
+                        </div>
+
+                        <p class="mb-3">"@r.Comentario"</p>
+
+                        @if (!string.IsNullOrEmpty(r.Respuesta))
+                        {
+                            <div class="p-3 rounded mt-2 border-start border-accent border-4" style="background: rgba(var(--accent-rgb), 0.1);">
+                                <div class="small font-bold text-accent mb-1">Tu respuesta (@r.FechaRespuesta?.ToString("dd/MM/yy")):</div>
+                                <div>@r.Respuesta</div>
+                            </div>
+                        }
+                        else
+                        {
+                            <button class="btn btn-sm btn-outline-accent" type="button" data-bs-toggle="collapse" data-bs-target="#reply-@r.Id">
+                                ✍️ Responder
+                            </button>
+                            <div class="collapse mt-3" id="reply-@r.Id">
+                                <form asp-action="ResponderResena" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="resenaId" value="@r.Id" />
+                                    <input type="hidden" name="restauranteId" value="@restauranteId" />
+                                    <textarea name="respuesta" class="form-control bg-dark text-white border-secondary mb-2" 
+                                              placeholder="Escribe tu respuesta pública..." rows="3" required></textarea>
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button type="button" class="btn btn-sm btn-link text-dim" data-bs-toggle="collapse" data-bs-target="#reply-@r.Id">Cancelar</button>
+                                        <button type="submit" class="btn btn-sm btn-accent">Enviar respuesta</button>
+                                    </div>
+                                </form>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

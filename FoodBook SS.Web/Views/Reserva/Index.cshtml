@@ -1,21 +1,57 @@
-﻿@model IEnumerable<FoodBook_SS.Domain.Entities.Reservation.Reserva>
+@model IEnumerable<FoodBook_SS.Domain.Entities.Reservation.Reserva>
 @{
     ViewData["Title"] = "Mis Reservas";
+    var esPropietario = User.IsInRole("Propietario") || User.IsInRole("Administrador");
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2> Mis Reservas</h2>
+<div class="page-header">
+    <h2>📅 Mis Reservas</h2>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-primary" id="btnBuscarRestaurante">
+        + Nueva Reserva
+    </a>
+</div>
+
+@* Filtros *@
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Estado</label>
+                <select name="estado" class="form-select" id="filtroEstado">
+                    <option value="">— Todos —</option>
+                    @foreach (var e in new[] { "Pendiente", "Confirmada", "Completada", "Cancelada", "NoShow" })
+                    {
+                        <option value="@e" selected="@(ViewBag.EstadoFiltro == e)">@e</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Fecha</label>
+                <input type="date" name="fecha" class="form-control" id="filtroFecha"
+                       value="@ViewBag.FechaFiltro" />
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100" id="btnFiltrar">Filtrar</button>
+            </div>
+            <div class="col-md-2">
+                <a asp-action="Index" class="btn btn-outline-secondary w-100" id="btnLimpiarFiltros">Limpiar</a>
+            </div>
+        </form>
+    </div>
 </div>
 
 @if (Model == null || !Model.Any())
 {
-    <div class="alert alert-info">No tienes reservas aún. <a asp-controller="Home" asp-action="Index">Busca un restaurante</a></div>
+    <div class="alert alert-info">
+        No tienes reservas con esos criterios.
+        <a asp-controller="Home" asp-action="Index" class="fw-bold ms-1">Busca un restaurante para reservar →</a>
+    </div>
 }
 else
 {
     <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead class="table-dark">
+        <table class="table table-hover align-middle" id="tablaReservas">
+            <thead>
                 <tr>
                     <th>Código</th>
                     <th>Restaurante</th>
@@ -30,43 +66,123 @@ else
             <tbody>
                 @foreach (var r in Model)
                 {
+                    var badge = r.Estado switch
+                    {
+                        "Confirmada" => "success",
+                        "Pendiente"  => "warning",
+                        "Cancelada"  => "danger",
+                        "Completada" => "secondary",
+                        "NoShow"     => "info",
+                        _            => "dark"
+                    };
                     <tr>
                         <td><code>@r.CodigoConfirmacion</code></td>
-                        <td>@r.Restaurante?.Nombre</td>
+                        <td><strong>@r.Restaurante?.Nombre</strong></td>
                         <td>@r.FechaReserva.ToString("dd/MM/yyyy")</td>
                         <td>@r.HoraReserva.ToString("hh\\:mm")</td>
-                        <td>@r.NumeroPersonas</td>
+                        <td class="text-center">@r.NumeroPersonas</td>
                         <td>@(r.Mesa?.NumeroMesa ?? "—")</td>
+                        <td><span class="badge bg-@badge">@r.Estado</span></td>
                         <td>
-                            @{
-                                var badge = r.Estado switch
+                            <div class="d-flex flex-wrap gap-1">
+                                @if (r.Estado is "Pendiente" or "Confirmada")
                                 {
-                                    "Confirmada" => "success",
-                                    "Pendiente" => "warning",
-                                    "Cancelada" => "danger",
-                                    "Completada" => "secondary",
-                                    _ => "dark"
-                                };
-                            }
-                            <span class="badge bg-@badge">@r.Estado</span>
-                        </td>
-                        <td>
-                            @if (r.Estado is "Pendiente" or "Confirmada")
-                            {
-                                <form asp-action="Cancelar" method="post" class="d-inline"
-                                      onsubmit="return confirm('¿Seguro que deseas cancelar esta reserva?')">
-                                    @Html.AntiForgeryToken()
-                                    <input name="id" type="hidden" value="@r.Id" />
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">Cancelar</button>
-                                </form>
-                                <a asp-controller="Orden" asp-action="Crear"
-                                   asp-route-restauranteId="@r.RestauranteId"
-                                   class="btn btn-sm btn-outline-success ms-1">Ordenar</a>
-                            }
+                                    @* Cancelar → abre modal *@
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger"
+                                            id="btnCancelar_@r.Id"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalCancelar"
+                                            data-reserva-id="@r.Id"
+                                            data-reserva-codigo="@r.CodigoConfirmacion">
+                                        Cancelar
+                                    </button>
+
+                                    @* Ordenar *@
+                                    <a asp-controller="Orden" asp-action="Crear"
+                                       asp-route-restauranteId="@r.RestauranteId"
+                                       asp-route-reservaId="@r.Id"
+                                       class="btn btn-sm btn-outline-success"
+                                       id="btnOrdenar_@r.Id">Ordenar</a>
+                                }
+
+                                @if (esPropietario)
+                                {
+                                    @if (r.Estado == "Pendiente")
+                                    {
+                                        <form asp-action="Confirmar" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input name="id" type="hidden" value="@r.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-primary"
+                                                    id="btnConfirmar_@r.Id">✔ Confirmar</button>
+                                        </form>
+                                    }
+                                    @if (r.Estado == "Confirmada")
+                                    {
+                                        <form asp-action="Completar" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input name="id" type="hidden" value="@r.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-info"
+                                                    id="btnCompletar_@r.Id">✅ Completar</button>
+                                        </form>
+                                        <form asp-action="MarcarNoShow" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input name="id" type="hidden" value="@r.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-warning"
+                                                    id="btnNoShow_@r.Id">🚫 No Show</button>
+                                        </form>
+                                    }
+                                }
+                            </div>
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
     </div>
+}
+
+@* Modal de confirmación de cancelación *@
+<div class="modal fade" id="modalCancelar" tabindex="-1" aria-labelledby="modalCancelarLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalCancelarLabel">⚠️ Cancelar Reserva</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="Cancelar" method="post" id="formCancelar">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <p class="text-muted mb-3">
+                        Estás a punto de cancelar la reserva <strong id="modalCodigoReserva"></strong>.
+                        Esta acción no se puede deshacer.
+                    </p>
+                    <input name="id" type="hidden" id="cancelarReservaId" />
+                    <div class="mb-3">
+                        <label class="form-label">Motivo (opcional)</label>
+                        <textarea name="motivo" class="form-control" rows="2"
+                                  placeholder="Ej: cambio de planes, emergencia..."
+                                  id="cancelarMotivo"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Volver</button>
+                    <button type="submit" class="btn btn-danger" id="btnConfirmarCancelacion">
+                        Sí, cancelar reserva
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.getElementById('modalCancelar').addEventListener('show.bs.modal', function (event) {
+        const btn = event.relatedTarget;
+        document.getElementById('cancelarReservaId').value = btn.getAttribute('data-reserva-id');
+        document.getElementById('modalCodigoReserva').textContent = btn.getAttribute('data-reserva-codigo');
+        document.getElementById('cancelarMotivo').value = '';
+    });
+</script>
 }

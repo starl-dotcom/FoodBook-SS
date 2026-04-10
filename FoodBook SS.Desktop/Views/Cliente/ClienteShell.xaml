@@ -1,0 +1,72 @@
+<Window x:Class="FoodBook_SS.Desktop.Views.Cliente.ClienteShell"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:pages="clr-namespace:FoodBook_SS.Desktop.Views.Cliente"
+        Title="FoodBook SS — Cliente"
+        Width="1100" Height="700" MinWidth="900" MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BrBgDeep}">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Border Grid.Column="0" Background="{StaticResource BrBgSidebar}"
+                BorderBrush="{StaticResource BrBorder}" BorderThickness="0,0,1,0">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Margin="20,24,20,20">
+                    <TextBlock Text="🍽️ FoodBook SS"
+                               Foreground="{StaticResource BrAccent}"
+                               FontSize="17" FontWeight="Bold" FontFamily="Segoe UI"/>
+                    <TextBlock x:Name="TxtUsuario" Text="Cliente"
+                               Foreground="{StaticResource BrTextDim}"
+                               FontSize="12" FontFamily="Segoe UI" Margin="0,3,0,0"/>
+                </StackPanel>
+                <Separator DockPanel.Dock="Top" Background="{StaticResource BrBorder}" Margin="16,0"/>
+                <StackPanel DockPanel.Dock="Top" Margin="0,10,0,0">
+                    <Button x:Name="BtnExplorar"  Content="🏠  Explorar"       Style="{StaticResource NavItem}" Click="Nav_Click"/>
+                    <Button x:Name="BtnReservas"  Content="📅  Mis Reservas"  Style="{StaticResource NavItem}" Click="Nav_Click"/>
+                    <Button x:Name="BtnOrdenes"   Content="🧾  Mis Órdenes"   Style="{StaticResource NavItem}" Click="Nav_Click"/>
+                    <Button x:Name="BtnPagar"     Content="💳  Pagos"          Style="{StaticResource NavItem}" Click="Nav_Click"/>
+                    <Button x:Name="BtnResenas"   Content="⭐  Calificar"      Style="{StaticResource NavItem}" Click="Nav_Click"/>
+                </StackPanel>
+                <Border DockPanel.Dock="Bottom" Background="#1E293B" CornerRadius="8"
+                        Margin="12,0,12,12" Padding="14,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="🔔 Notificaciones" Foreground="{StaticResource BrTextDim}" FontSize="12"/>
+                        <Border Grid.Column="1" Background="{StaticResource BrAccent}" CornerRadius="10"
+                                Padding="6,2" x:Name="BadgeNotif" Visibility="Collapsed">
+                            <TextBlock x:Name="TxtBadge" Text="0" Foreground="White" FontSize="11" FontWeight="Bold"/>
+                        </Border>
+                    </Grid>
+                </Border>
+                <Button DockPanel.Dock="Bottom" Content="🚪  Cerrar sesión"
+                        Style="{StaticResource NavItem}" Click="Logout_Click" Margin="0,0,0,6"/>
+            </DockPanel>
+        </Border>
+        <Frame x:Name="MainFrame" Grid.Column="1"
+               NavigationUIVisibility="Hidden"
+               Background="{StaticResource BrBgDeep}"/>
+        <Popup x:Name="NotifPopup" Grid.Column="1" PlacementTarget="{Binding ElementName=BadgeNotif}"
+               AllowsTransparency="True" StaysOpen="False" Placement="Bottom">
+            <Border Background="#1E293B" BorderBrush="{StaticResource BrBorder}" BorderThickness="1"
+                    CornerRadius="10" Width="300" MaxHeight="320">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black" Opacity="0.3" BlurRadius="10" ShadowDepth="2"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="🔔 Notificaciones" Foreground="{StaticResource BrText}"
+                               FontWeight="Bold" Margin="14,12"/>
+                    <Separator Background="{StaticResource BrBorder}"/>
+                    <ListBox x:Name="NotifList" Background="Transparent" BorderThickness="0"
+                             MaxHeight="240"/>
+                </StackPanel>
+            </Border>
+        </Popup>
+    </Grid>
+</Window>
+

@@ -1,0 +1,43 @@
+<Window x:Class="FoodBook_SS.Desktop.Views.Propietario.PropietarioShell"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="FoodBook SS — Propietario"
+        Width="1200" Height="740" MinWidth="1000"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BrBgDeep}">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="230"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Border Grid.Column="0" Background="{StaticResource BrBgSidebar}"
+                BorderBrush="{StaticResource BrBorder}" BorderThickness="0,0,1,0">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Margin="20,24,20,16">
+                    <TextBlock Text="🍽️ FoodBook SS" Foreground="{StaticResource BrAccent}"
+                               FontSize="17" FontWeight="Bold" FontFamily="Segoe UI"/>
+                    <TextBlock x:Name="TxtUsuario" Text="Propietario"
+                               Foreground="{StaticResource BrTextDim}" FontSize="12" Margin="0,3,0,0"/>
+                    <Border Background="#1E293B" CornerRadius="4" Padding="8,3" Margin="0,6,0,0" HorizontalAlignment="Left">
+                        <TextBlock Text="👑 Propietario" Foreground="{StaticResource BrAccent}" FontSize="11"/>
+                    </Border>
+                </StackPanel>
+                <Separator DockPanel.Dock="Top" Background="{StaticResource BrBorder}" Margin="16,0"/>
+                <StackPanel DockPanel.Dock="Top" Margin="0,10,0,0">
+                    <Button x:Name="BtnReservas"  Content="📅  Reservas del Día" Style="{StaticResource NavItem}"  Click="Nav_Click"/>
+                    <Button x:Name="BtnOrdenes"   Content="🧾  Órdenes Activas"  Style="{StaticResource NavItem}"  Click="Nav_Click"/>
+                    <Button x:Name="BtnMenu"      Content="🍴  Gestión de Menú"  Style="{StaticResource NavItem}"  Click="Nav_Click"/>
+                    <Button x:Name="BtnMesas"     Content="🪑  Gestión de Mesas" Style="{StaticResource NavItem}"  Click="Nav_Click"/>
+                    <Button x:Name="BtnResenas"    Content="⭐  Reseñas Clientes"  Style="{StaticResource NavItem}"  Click="Nav_Click"/>
+                    <Button x:Name="BtnMetricas"  Content="📊  Dashboard / Métricas" Style="{StaticResource NavItem}"  Click="Nav_Click"/>
+                </StackPanel>
+                <Button DockPanel.Dock="Bottom" Content="🚪  Cerrar sesión"
+                        Style="{StaticResource NavItem}" Click="Logout_Click" Margin="0,0,0,8"/>
+            </DockPanel>
+        </Border>
+        <Frame x:Name="MainFrame" Grid.Column="1"
+               NavigationUIVisibility="Hidden"
+               Background="{StaticResource BrBgDeep}"/>
+    </Grid>
+</Window>
+

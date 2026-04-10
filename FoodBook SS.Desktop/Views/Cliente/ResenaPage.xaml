@@ -1,0 +1,46 @@
+<Page x:Class="FoodBook_SS.Desktop.Views.Cliente.ResenaPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Calificar" Background="{StaticResource BrBgDeep}">
+    <Grid Margin="32,24">
+        <StackPanel>
+            <TextBlock Text="⭐ Calificar Experiencia" Style="{StaticResource H1}" Margin="0,0,0,16"/>
+            <TextBlock Style="{StaticResource Body}"
+                       Text="Solo puedes calificar órdenes completadas. Ve a 'Mis Órdenes' y selecciona una orden con estado 'Completada' o 'Entregada' para dejar tu reseña."
+                       TextWrapping="Wrap" Margin="0,0,0,20"/>
+            <Border Style="{StaticResource Card}" MaxWidth="500" HorizontalAlignment="Left" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}, ConverterParameter=Invert}">
+                <StackPanel>
+                    <TextBlock Text="1. Selecciona la Orden (Entregada/Completada)" Style="{StaticResource FormLabel}"/>
+                    <ComboBox ItemsSource="{Binding OrdenesCompletadas}"
+                              SelectedItem="{Binding OrdenSeleccionada}"
+                              DisplayMemberPath="Id"
+                              Style="{StaticResource DarkCombo}" Margin="0,0,0,16"/>
+                    <TextBlock Text="Calificación (1-5)" Style="{StaticResource FormLabel}"/>
+                    <Slider x:Name="SlCalificacion" Minimum="1" Maximum="5" 
+                            Value="{Binding Calificacion, UpdateSourceTrigger=PropertyChanged}"
+                            IsSnapToTickEnabled="True" TickFrequency="1"
+                            Foreground="{StaticResource BrAccent}" Margin="0,0,0,8"/>
+                    <TextBlock Text="{Binding Calificacion, StringFormat={}⭐ {0}}"
+                               Foreground="{StaticResource BrAccent}" FontSize="18" FontWeight="Bold" Margin="0,0,0,14"/>
+                    <TextBlock Text="Comentario" Style="{StaticResource FormLabel}"/>
+                    <TextBox x:Name="TxtComentario" Style="{StaticResource DarkInput}"
+                             Height="90" AcceptsReturn="True" TextWrapping="Wrap"
+                             Text="{Binding Comentario, UpdateSourceTrigger=PropertyChanged}"
+                             VerticalScrollBarVisibility="Auto" Margin="0,0,0,16"/>
+                    <Border Background="#3B1515" CornerRadius="6" Padding="10,7" Margin="0,0,0,10"
+                            Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibility}, FallbackValue=Collapsed}">
+                        <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource BrDanger}" FontSize="12" TextWrapping="Wrap"/>
+                    </Border>
+                    <Border Background="#1A3B26" CornerRadius="6" Padding="10,7" Margin="0,0,0,10"
+                            Visibility="{Binding SuccessMessage, Converter={StaticResource StringToVisibility}, FallbackValue=Collapsed}">
+                        <TextBlock Text="{Binding SuccessMessage}" Foreground="{StaticResource BrSuccess}" FontSize="12" TextWrapping="Wrap"/>
+                    </Border>
+                    <Button Content="Enviar Reseña" Command="{Binding GuardarCommand}" Style="{StaticResource BtnPrimary}" HorizontalAlignment="Left"/>
+                </StackPanel>
+            </Border>
+            <TextBlock Text="⏳ Procesando..." Style="{StaticResource Body}" Margin="0,20,0,0"
+                       Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
+        </StackPanel>
+    </Grid>
+</Page>
+

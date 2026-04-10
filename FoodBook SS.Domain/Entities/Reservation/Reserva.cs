@@ -1,4 +1,4 @@
-﻿using FoodBook_SS.Domain.Base;
+using FoodBook_SS.Domain.Base;
 using FoodBook_SS.Domain.Entities.Configuration;
 using FoodBook_SS.Domain.Entities.User;
 
@@ -20,6 +20,7 @@ namespace FoodBook_SS.Domain.Entities.Reservation
         public const string EnPreparacion = "EnPreparacion";
         public const string Lista = "Lista";
         public const string Entregada = "Entregada";
+        public const string Completada = "Completada";
         public const string Cancelada = "Cancelada";
     }
 

@@ -1,4 +1,4 @@
-﻿using FoodBook_SS.Application.Interfaces;
+using FoodBook_SS.Application.Interfaces;
 using FoodBook_SS.Domain.Base;
 using FoodBook_SS.Domain.Entities.Audit;
 using FoodBook_SS.Domain.Repository;
@@ -21,6 +21,12 @@ namespace FoodBook_SS.Application.Services
         }
         public Task<OperationResult> GetMetricasAsync(int restauranteId, DateOnly desde, DateOnly hasta)
             => Task.FromResult(OperationResult.Ok());
+
+        public async Task<OperationResult> GetAllLogsAsync()
+        {
+            var logs = await _repo.GetAllAsync();
+            return OperationResult.Ok(data: logs);
+        }
     }
 
     public class NotificationService : INotificationService

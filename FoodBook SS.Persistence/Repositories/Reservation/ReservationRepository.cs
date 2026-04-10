@@ -1,18 +1,15 @@
-﻿using FoodBook_SS.Domain.Base;
+using FoodBook_SS.Domain.Base;
 using FoodBook_SS.Domain.Entities.Reservation;
 using FoodBook_SS.Domain.Repository;
 using FoodBook_SS.Persistence.Base;
 using FoodBook_SS.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
-
 namespace FoodBook_SS.Persistence.Repositories.Reservation
 {
     public class ReservationRepository : BaseRepositorycs<Reserva>, IReservationRepository
     {
         private readonly FoodBookDbContext _context;
-
         public ReservationRepository(FoodBookDbContext context) : base(context) => _context = context;
-
         public async Task<OperationResult> GetByClienteIdAsync(int clienteId)
         {
             var lista = await _context.Reservas
@@ -21,7 +18,6 @@ namespace FoodBook_SS.Persistence.Repositories.Reservation
                 .OrderByDescending(r => r.FechaReserva).ToListAsync();
             return OperationResult.Ok(data: lista);
         }
-
         public async Task<OperationResult> GetByRestauranteAndFechaAsync(int restauranteId, DateOnly fecha)
         {
             var lista = await _context.Reservas
@@ -30,16 +26,26 @@ namespace FoodBook_SS.Persistence.Repositories.Reservation
                 .ToListAsync();
             return OperationResult.Ok(data: lista);
         }
-
         public async Task<OperationResult> GetByRestauranteAndEstadoAsync(int restauranteId, string estado)
         {
             var lista = await _context.Reservas
                 .Include(r => r.Cliente)
+                .Include(r => r.Mesa)
                 .Where(r => r.RestauranteId == restauranteId && r.Estado == estado)
                 .ToListAsync();
             return OperationResult.Ok(data: lista);
         }
-
+        public async Task<OperationResult> GetAllByRestauranteAsync(int restauranteId)
+        {
+            var lista = await _context.Reservas
+                .Include(r => r.Cliente)
+                .Include(r => r.Mesa)
+                .Where(r => r.RestauranteId == restauranteId)
+                .OrderByDescending(r => r.FechaReserva)
+                .ThenBy(r => r.HoraReserva)
+                .ToListAsync();
+            return OperationResult.Ok(data: lista);
+        }
         public async Task<OperationResult> IsMesaDisponibleAsync(int mesaId, DateOnly fecha, TimeOnly hora)
         {
             var ocupada = await _context.Reservas.AnyAsync(r =>
@@ -50,7 +56,6 @@ namespace FoodBook_SS.Persistence.Repositories.Reservation
                 r.Estado != EstadoReserva.NoShow);
             return OperationResult.Ok(data: !ocupada);
         }
-
         public async Task<OperationResult> GetMesasDisponiblesAsync(int restauranteId, DateOnly fecha,
                                                                      TimeOnly hora, int personas)
         {
@@ -62,7 +67,6 @@ namespace FoodBook_SS.Persistence.Repositories.Reservation
                             r.Estado != EstadoReserva.NoShow)
                 .Select(r => r.MesaId)
                 .ToListAsync();
-
             var mesasDisponibles = await _context.Mesas
                 .Where(m => m.RestauranteId == restauranteId &&
                             m.Activa == true &&
@@ -70,12 +74,10 @@ namespace FoodBook_SS.Persistence.Repositories.Reservation
                             !mesasOcupadas.Contains((int?)m.Id))
                 .OrderBy(m => m.Capacidad)
                 .ToListAsync();
-
             return mesasDisponibles.Any()
                 ? OperationResult.Ok(data: mesasDisponibles)
                 : OperationResult.Fail("No hay mesas disponibles para la fecha, hora y número de personas.");
         }
-
         public async Task<OperationResult> GetByCodigoConfirmacionAsync(string codigo)
         {
             var r = await _context.Reservas
@@ -85,7 +87,6 @@ namespace FoodBook_SS.Persistence.Repositories.Reservation
                 ? OperationResult.Fail("Código de confirmación no encontrado.")
                 : OperationResult.Ok(data: r);
         }
-
         public async Task<OperationResult> GetReservaActivaAsync(int clienteId, int restauranteId, DateOnly fecha)
         {
             var r = await _context.Reservas
@@ -95,56 +96,64 @@ namespace FoodBook_SS.Persistence.Repositories.Reservation
                                           (r.Estado == EstadoReserva.Pendiente || r.Estado == EstadoReserva.Confirmada));
             return OperationResult.Ok(data: r);
         }
-
         public async Task<OperationResult> ConfirmarReservaAsync(int reservaId, int actorId) =>
             await CambiarEstadoAsync(reservaId, EstadoReserva.Confirmada, actorId);
-
         public async Task<OperationResult> CancelarReservaAsync(int reservaId, int actorId, string? motivo)
         {
             var reserva = await _context.Reservas.FindAsync(reservaId);
             if (reserva is null) return OperationResult.Fail("Reserva no encontrada.");
-
             var estadosNoCancelables = new[] { EstadoReserva.Cancelada, EstadoReserva.Completada, EstadoReserva.NoShow };
             if (estadosNoCancelables.Contains(reserva.Estado))
                 return OperationResult.Fail($"No se puede cancelar una reserva en estado '{reserva.Estado}'.");
-
             reserva.Estado = EstadoReserva.Cancelada;
             reserva.ModificadoPor = actorId;
             reserva.ActualizadoEn = DateTime.UtcNow;
+            var ordenesActivas = await _context.Ordenes
+                .Where(o => o.ReservaId == reservaId &&
+                            o.Estado != EstadoOrden.Cancelada &&
+                            o.Estado != EstadoOrden.Entregada &&
+                            o.Estado != EstadoOrden.Completada)
+                .ToListAsync();
+            foreach (var orden in ordenesActivas)
+            {
+                orden.Estado = EstadoOrden.Cancelada;
+                orden.ModificadoPor = actorId;
+                orden.ActualizadoEn = DateTime.UtcNow;
+            }
             await _context.SaveChangesAsync();
             return OperationResult.Ok("Reserva cancelada.");
         }
-
-
         public async Task<OperationResult> CompletarReservaAsync(int reservaId, int actorId)
         {
             var reserva = await _context.Reservas.FindAsync(reservaId);
             if (reserva is null) return OperationResult.Fail("Reserva no encontrada.");
-
+            if (reserva.Estado != EstadoReserva.Confirmada)
+                return OperationResult.Fail("La reserva debe estar confirmada antes de marcarla como completada.");
             reserva.Estado = EstadoReserva.Completada;
             reserva.ModificadoPor = actorId;
             reserva.ActualizadoEn = DateTime.UtcNow;
-
             var ordenes = await _context.Ordenes
                 .Where(o => o.ReservaId == reservaId &&
                             (o.Estado == EstadoOrden.Confirmada ||
                              o.Estado == EstadoOrden.EnPreparacion ||
                              o.Estado == EstadoOrden.Lista))
                 .ToListAsync();
-
             foreach (var orden in ordenes)
             {
                 orden.Estado = EstadoOrden.Entregada;
                 orden.ActualizadoEn = DateTime.UtcNow;
             }
-
             await _context.SaveChangesAsync();
             return OperationResult.Ok("Reserva marcada como Completada.");
         }
-
-        public Task<OperationResult> MarcarNoShowAsync(int reservaId, int actorId) =>
-            CambiarEstadoAsync(reservaId, EstadoReserva.NoShow, actorId);
-
+        public async Task<OperationResult> MarcarNoShowAsync(int reservaId, int actorId)
+        {
+            var reserva = await _context.Reservas.FindAsync(reservaId);
+            if (reserva is null) return OperationResult.Fail("Reserva no encontrada.");
+            if (reserva.Estado != EstadoReserva.Confirmada)
+                return OperationResult.Fail("Solo se puede marcar No Show a una reserva Confirmada.");
+            return await CambiarEstadoAsync(reservaId, EstadoReserva.NoShow, actorId);
+        }
         public async Task<OperationResult> GetReservasParaRecordatorioAsync(DateTime desde, DateTime hasta)
         {
             var desdeDate = DateOnly.FromDateTime(desde);
@@ -157,7 +166,6 @@ namespace FoodBook_SS.Persistence.Repositories.Reservation
                 .ToListAsync();
             return OperationResult.Ok(data: lista);
         }
-
         public async Task<OperationResult> GetConteosPorEstadoAsync(int restauranteId, DateOnly desde, DateOnly hasta)
         {
             var conteos = await _context.Reservas
@@ -168,12 +176,10 @@ namespace FoodBook_SS.Persistence.Repositories.Reservation
                 .ToListAsync();
             return OperationResult.Ok(data: conteos);
         }
-
         private async Task<OperationResult> CambiarEstadoAsync(int reservaId, string nuevoEstado, int actorId)
         {
             var reserva = await _context.Reservas.FindAsync(reservaId);
             if (reserva is null) return OperationResult.Fail("Reserva no encontrada.");
-
             reserva.Estado = nuevoEstado;
             reserva.ModificadoPor = actorId;
             reserva.ActualizadoEn = DateTime.UtcNow;

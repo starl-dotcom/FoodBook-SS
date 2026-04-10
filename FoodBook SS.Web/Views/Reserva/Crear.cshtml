@@ -1,54 +1,134 @@
-﻿@model FoodBook_SS.Application.Dtos.Reservation.SaveReservationDto
+@model FoodBook_SS.Application.Dtos.Reservation.SaveReservationDto
 @{
     ViewData["Title"] = "Nueva Reserva";
 }
 
 <div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card shadow">
-            <div class="card-header bg-dark text-white">
-                <h5 class="mb-0"> Nueva Reserva</h5>
+    <div class="col-md-7 col-lg-5">
+
+        <div class="page-header">
+            <h2>📅 Nueva Reserva</h2>
+        </div>
+
+        <div class="card shadow-glow">
+            <div class="card-header">
+                <span style="color:var(--accent);">Completa los datos de tu reserva</span>
             </div>
-            <div class="card-body">
-                <form asp-action="Crear" method="post">
+            <div class="card-body p-4">
+                <form asp-action="Crear" method="post" id="formCrearReserva">
                     @Html.AntiForgeryToken()
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-3"></div>
 
                     <input asp-for="RestauranteId" type="hidden" />
 
-                    <div class="mb-3">
-                        <label asp-for="FechaReserva" class="form-label">Fecha</label>
-                        <input asp-for="FechaReserva" type="date" class="form-control"
+                    <div class="mb-4">
+                        <label asp-for="FechaReserva" class="form-label">Fecha de Reserva</label>
+                        <input asp-for="FechaReserva" type="date" class="form-control" id="fechaReserva"
                                min="@DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")" />
                         <span asp-validation-for="FechaReserva" class="text-danger small"></span>
                     </div>
-                    <div class="mb-3">
-                        <label asp-for="HoraReserva" class="form-label">Hora</label>
-                        <input asp-for="HoraReserva" type="time" class="form-control" />
+
+                    <div class="mb-4">
+                        <label asp-for="HoraReserva" class="form-label">Hora de Reserva</label>
+                        <input asp-for="HoraReserva" type="time" class="form-control" id="horaReserva"
+                               min="10:00" max="23:00" step="1800" />
                         <span asp-validation-for="HoraReserva" class="text-danger small"></span>
                     </div>
-                    <div class="mb-3">
+
+                    <div class="mb-4">
                         <label asp-for="NumeroPersonas" class="form-label">Número de personas</label>
-                        <input asp-for="NumeroPersonas" type="number" min="1" max="20" class="form-control" />
+                        <input asp-for="NumeroPersonas" type="number" min="1" max="20"
+                               class="form-control" id="numeroPersonas" />
                         <span asp-validation-for="NumeroPersonas" class="text-danger small"></span>
                     </div>
-                    <div class="mb-3">
-                        <label asp-for="NotasEspeciales" class="form-label">
-                            Notas especiales <small class="text-muted">(opcional)</small>
-                        </label>
-                        <textarea asp-for="NotasEspeciales" class="form-control" rows="2"
-                                  placeholder="Alergias, celebraciones, etc."></textarea>
+
+                    <div class="mb-4">
+                        <label asp-for="MesaId" class="form-label">Seleccionar Mesa</label>
+                        <select asp-for="MesaId" class="form-select" id="mesaSelector">
+                            <option value="">-- Selecciona fecha, hora y personas primero --</option>
+                        </select>
+                        <span asp-validation-for="MesaId" class="text-danger small"></span>
+                        <div id="mesaInfo" class="form-text mt-1 text-info" style="display:none;"></div>
                     </div>
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-dark">Crear Reserva</button>
-                        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+
+                    <div class="mb-4">
+                        <label asp-for="NotasEspeciales" class="form-label">
+                            Notas especiales <small class="text-muted fw-normal">(opcional)</small>
+                        </label>
+                        <textarea asp-for="NotasEspeciales" class="form-control" rows="3"
+                                  placeholder="Alergias, celebraciones especiales, preferencias de mesa..."></textarea>
+                    </div>
+
+                    <div class="d-flex gap-2 pt-2">
+                        <button type="submit" class="btn btn-primary flex-fill" id="btnCrearReserva">
+                            ✅ Crear Reserva
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary" id="btnCancelarCrear">Cancelar</a>
                     </div>
                 </form>
             </div>
         </div>
+
     </div>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const fechaInput = document.getElementById("fechaReserva");
+            const horaInput = document.getElementById("horaReserva");
+            const persInput = document.getElementById("numeroPersonas");
+            const restId = document.getElementById("RestauranteId").value;
+            const mesaSel = document.getElementById("mesaSelector");
+            const mesaInfo = document.getElementById("mesaInfo");
+            const btnSubmit = document.getElementById("btnCrearReserva");
+
+            function checkAvailableTables() {
+                const fecha = fechaInput.value;
+                const hora = horaInput.value;
+                let personas = parseInt(persInput.value);
+
+                if (!fecha || !hora || isNaN(personas) || personas < 1) {
+                    mesaSel.innerHTML = '<option value="">-- Completa los datos primero --</option>';
+                    mesaSel.disabled = true;
+                    btnSubmit.disabled = true;
+                    mesaInfo.style.display = 'none';
+                    return;
+                }
+
+                mesaSel.innerHTML = '<option value="">[Buscando mesas...]</option>';
+                mesaSel.disabled = true;
+                btnSubmit.disabled = true;
+                mesaInfo.style.display = 'none';
+
+                fetch(`/Reserva/MesasDisponibles?restauranteId=${restId}&fecha=${fecha}&hora=${hora}&personas=${personas}`)
+                    .then(r => r.json())
+                    .then(res => {
+                        mesaSel.innerHTML = '';
+                        if (res.success && res.data && res.data.length > 0) {
+                            mesaSel.innerHTML = '<option value="">-- Seleccione una mesa --</option>';
+                            res.data.forEach(m => {
+                                const opt = document.createElement("option");
+                                opt.value = m.id;
+                                opt.text = `Mesa ${m.numeroMesa} (Capacidad: ${m.capacidad})`;
+                                mesaSel.appendChild(opt);
+                            });
+                            mesaSel.disabled = false;
+                            btnSubmit.disabled = false;
+                        } else {
+                            mesaSel.innerHTML = `<option value="">No hay mesas para ${personas} pers. a esa hora.</option>`;
+                        }
+                    }).catch(e => {
+                        mesaSel.innerHTML = '<option value="">Error al cargar mesas.</option>';
+                    });
+            }
+
+            fechaInput.addEventListener("change", checkAvailableTables);
+            horaInput.addEventListener("change", checkAvailableTables);
+            persInput.addEventListener("change", checkAvailableTables);
+            persInput.addEventListener("keyup", checkAvailableTables);
+        });
+    </script>
 }

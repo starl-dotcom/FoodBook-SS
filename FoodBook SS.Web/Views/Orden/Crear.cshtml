@@ -1,75 +1,183 @@
-﻿@model IEnumerable<FoodBook_SS.Domain.Entities.Configuration.ProductoMenu>
+@model IEnumerable<FoodBook_SS.Domain.Entities.Configuration.ProductoMenu>
 @{
     ViewData["Title"] = "Nueva Orden";
     var restauranteId = (int)ViewBag.RestauranteId;
+    var reservaId     = (int)(ViewBag.ReservaId ?? 0);
+    var productos     = Model?.ToList() ?? new List<FoodBook_SS.Domain.Entities.Configuration.ProductoMenu>();
 }
-
-<h2 class="mb-4">🍽️ Selecciona tus productos</h2>
-
+<div class="page-header">
+    <h2>🍽️ Selecciona tus productos</h2>
+    <a asp-action="Index" class="btn btn-outline-secondary" id="btnVolverOrdenes">← Volver</a>
+</div>
 <form asp-action="Crear" method="post" id="ordenForm">
     @Html.AntiForgeryToken()
     <input name="RestauranteId" type="hidden" value="@restauranteId" />
-
-    <div class="row row-cols-1 row-cols-md-3 g-3 mb-4" id="productosList">
-        @if (Model == null || !Model.Any())
-        {
-            <div class="col-12">
-                <div class="alert alert-warning">Este restaurante no tiene productos disponibles.</div>
-            </div>
-        }
-        else
-        {
-            var idx = 0;
-            @foreach (var p in Model)
+    <input name="ReservaId"     type="hidden" value="@reservaId" />
+    <div class="row">
+        @* ── Productos ─────────────────────────────────────── *@
+        <div class="col-lg-8">
+            @if (!productos.Any())
             {
-                <div class="col">
-                    <div class="card h-100">
-                        @if (p.Imagen != null)
+                <div class="alert alert-warning">Este restaurante no tiene productos disponibles.</div>
+            }
+            else
+            {
+                var categorias = productos
+                    .GroupBy(p => p.Categoria?.Nombre ?? "Sin categoría")
+                    .OrderBy(g => g.Key);
+                var idx = 0;
+                @foreach (var cat in categorias)
+                {
+                    <h5 class="mt-3 mb-3" style="color:var(--accent);border-bottom:1px solid var(--border-color);padding-bottom:.4rem;">
+                        @cat.Key
+                    </h5>
+                    <div class="row row-cols-1 row-cols-md-2 g-3 mb-3">
+                        @foreach (var p in cat)
                         {
-                            <img src="@p.Imagen" class="card-img-top" style="height:140px;object-fit:cover;" alt="@p.Nombre" />
-                        }
-                        <div class="card-body">
-                            <h6 class="card-title">@p.Nombre</h6>
-                            <p class="text-muted small">@p.Descripcion</p>
-                            <p class="fw-bold">RD$ @p.Precio.ToString("N2")</p>
-                            <div class="d-flex align-items-center gap-2">
-                                <input type="hidden" name="Items[@idx].ProductoId" value="@p.Id" />
-                                <label class="form-label mb-0">Cantidad:</label>
-                                <input type="number" name="Items[@idx].Cantidad"
-                                       min="0" max="20" value="0"
-                                       class="form-control form-control-sm cantidad-input"
-                                       style="width:70px" />
+                            <div class="col">
+                                <div class="producto-card p-3" data-price="@p.Precio.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)"
+                                     data-name="@p.Nombre" data-idx="@idx">
+                                    @if (!string.IsNullOrEmpty(p.Imagen))
+                                    {
+                                        <img src="@p.Imagen" alt="@p.Nombre"
+                                             style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:.75rem;" />
+                                    }
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <h6 class="mb-0">@p.Nombre</h6>
+                                            @if (!string.IsNullOrEmpty(p.Descripcion))
+                                            {
+                                                <small class="text-muted">@p.Descripcion</small>
+                                            }
+                                        </div>
+                                        <span class="producto-precio ms-2 text-nowrap">RD$ @p.Precio.ToString("N2")</span>
+                                    </div>
+                                    <div class="qty-control mt-2">
+                                        <input type="hidden" name="Items[@idx].ProductoId" value="@p.Id" />
+                                        <button type="button" class="qty-btn btn-minus" data-idx="@idx">−</button>
+                                        <span class="qty-display" id="qty-display-@idx">0</span>
+                                        <button type="button" class="qty-btn btn-plus"  data-idx="@idx">+</button>
+                                        <input type="hidden" name="Items[@idx].Cantidad"
+                                               id="qty-input-@idx" value="0" class="qty-hidden" />
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                            idx++;
+                        }
+                    </div>
+                }
+            }
+            <div class="mb-4">
+                <label class="form-label">Notas generales <small class="text-muted fw-normal">(opcional)</small></label>
+                <textarea name="Notas" class="form-control" rows="2"
+                          placeholder="Sin cebolla, extra salsa, preferencias..."></textarea>
+            </div>
+        </div>
+        @* ── Carrito ───────────────────────────────────────── *@
+        <div class="col-lg-4">
+            <div class="carrito-sidebar">
+                <h5 class="mb-3" style="color:var(--accent);">🛒 Tu pedido</h5>
+                <div id="carritoItems">
+                    <p class="text-muted text-center py-3" id="carritoVacio">
+                        Selecciona productos para comenzar
+                    </p>
+                </div>
+                <div class="carrito-total mt-2">
+                    <div class="d-flex justify-content-between text-muted" style="font-size:.85rem;">
+                        <span>Subtotal</span>
+                        <span id="subtotalDisplay">RD$ 0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between text-muted" style="font-size:.85rem;">
+                        <span>ITBIS (18%)</span>
+                        <span id="itbisDisplay">RD$ 0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2">
+                        <strong>Total</strong>
+                        <strong style="color:var(--accent);" id="totalDisplay">RD$ 0.00</strong>
                     </div>
                 </div>
-                idx++;
-            }
-        }
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Notas generales <small class="text-muted">(opcional)</small></label>
-        <textarea name="Notas" class="form-control" rows="2" placeholder="Sin cebolla, extra salsa..."></textarea>
-    </div>
-
-    <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-dark">Crear Orden</button>
-        <a asp-action="Index" class="btn btn-outline-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary w-100 mt-3" id="btnCrearOrden">
+                    ✅ Confirmar Orden
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary w-100 mt-2" id="btnCancelarOrden">Cancelar</a>
+            </div>
+        </div>
     </div>
 </form>
-
 @section Scripts {
-    <script>
-
-        document.getElementById('ordenForm').addEventListener('submit', function(e) {
-            const inputs = document.querySelectorAll('.cantidad-input');
-            let alguno = false;
-            inputs.forEach(inp => { if (parseInt(inp.value) > 0) alguno = true; });
-            if (!alguno) {
-                e.preventDefault();
-                alert('Debes seleccionar al menos un producto.');
-            }
+<script>
+    const ITBIS = 0.18;
+    let carrito = {}; 
+    function actualizarCarrito() {
+        const items = Object.values(carrito).filter(i => i.cantidad > 0);
+        const contenedor = document.getElementById('carritoItems');
+        const vacio      = document.getElementById('carritoVacio');
+        if (items.length === 0) {
+            contenedor.innerHTML = '';
+            vacio.style.display = 'block';
+            contenedor.appendChild(vacio);
+            document.getElementById('subtotalDisplay').textContent = 'RD$ 0.00';
+            document.getElementById('itbisDisplay').textContent    = 'RD$ 0.00';
+            document.getElementById('totalDisplay').textContent    = 'RD$ 0.00';
+            return;
+        }
+        vacio.style.display = 'none';
+        let subtotal = 0;
+        contenedor.innerHTML = '';
+        items.forEach(item => {
+            const lineTotal = item.precio * item.cantidad;
+            subtotal += lineTotal;
+            const div = document.createElement('div');
+            div.className = 'carrito-item';
+            div.innerHTML = `
+                <span class="text-truncate" style="max-width:140px;" title="${item.nombre}">
+                    ${item.cantidad}x ${item.nombre}
+                </span>
+                <span class="text-nowrap" style="color:var(--accent);">RD$ ${lineTotal.toFixed(2)}</span>`;
+            contenedor.appendChild(div);
         });
-    </script>
+        const itbis = subtotal * ITBIS;
+        const total = subtotal + itbis;
+        document.getElementById('subtotalDisplay').textContent = `RD$ ${subtotal.toFixed(2)}`;
+        document.getElementById('itbisDisplay').textContent    = `RD$ ${itbis.toFixed(2)}`;
+        document.getElementById('totalDisplay').textContent    = `RD$ ${total.toFixed(2)}`;
+    }
+    document.querySelectorAll('.btn-plus').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const idx    = this.dataset.idx;
+            const input  = document.getElementById(`qty-input-${idx}`);
+            const display = document.getElementById(`qty-display-${idx}`);
+            const card   = this.closest('[data-idx]');
+            const precio  = parseFloat(card.dataset.price);
+            const nombre  = card.dataset.name;
+            let qty = parseInt(input.value) + 1;
+            if (qty > 20) qty = 20;
+            input.value   = qty;
+            display.textContent = qty;
+            carrito[idx] = { nombre, precio, cantidad: qty };
+            actualizarCarrito();
+        });
+    });
+    document.querySelectorAll('.btn-minus').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const idx    = this.dataset.idx;
+            const input  = document.getElementById(`qty-input-${idx}`);
+            const display = document.getElementById(`qty-display-${idx}`);
+            let qty = parseInt(input.value) - 1;
+            if (qty < 0) qty = 0;
+            input.value   = qty;
+            display.textContent = qty;
+            if (carrito[idx]) carrito[idx].cantidad = qty;
+            actualizarCarrito();
+        });
+    });
+    document.getElementById('ordenForm').addEventListener('submit', function (e) {
+        const tieneItems = Object.values(carrito).some(i => i.cantidad > 0);
+        if (!tieneItems) {
+            e.preventDefault();
+            alert('Debes seleccionar al menos un producto antes de confirmar la orden.');
+        }
+    });
+</script>
 }
+

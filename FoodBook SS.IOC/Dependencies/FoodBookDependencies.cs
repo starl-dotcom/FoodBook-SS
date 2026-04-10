@@ -1,8 +1,9 @@
-﻿using FoodBook_SS.Application.Interfaces;
+using FoodBook_SS.Application.Interfaces;
 using FoodBook_SS.Application.Services;
 using FoodBook_SS.Domain.Repository;
 using FoodBook_SS.Infrastructure.Adapters;
 using FoodBook_SS.Infrastructure.Security;
+using FoodBook_SS.Infrastructure.Services;
 using FoodBook_SS.Persistence.Base;
 using FoodBook_SS.Persistence.Context;
 using FoodBook_SS.Persistence.Repositories.Audit;
@@ -60,6 +61,7 @@ namespace FoodBook_SS.IOC
             s.AddScoped<IReviewService, ReviewService>();
             s.AddScoped<IAuditService, AuditService>();
             s.AddScoped<INotificationService, NotificationService>();
+            s.AddSingleton<NotificationInbox>();
             s.AddScoped<IPaymentGateway, StripePaymentAdapter>();
             s.AddScoped<INotificationSender, EmailNotificationAdapter>();
         }

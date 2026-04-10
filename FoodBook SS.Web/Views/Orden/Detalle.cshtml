@@ -1,0 +1,156 @@
+@model FoodBook_SS.Domain.Entities.Order.Orden
+@{
+    ViewData["Title"] = "Detalle de Orden";
+    var subtotal = Model.Subtotal;
+    var itbis    = Model.Impuesto;
+    var total    = Model.Total;
+    var badge    = Model.Estado switch
+    {
+        "Confirmada" => "success",
+        "Pendiente"  => "warning",
+        "EnProceso"  => "info",
+        "Entregada"  => "secondary",
+        "Completada" => "secondary",
+        "Cancelada"  => "danger",
+        _            => "dark"
+    };
+}
+
+<div class="page-header">
+    <h2>🧾 Detalle de Orden <code>#@Model.Id</code></h2>
+    <a asp-action="Index" class="btn btn-outline-secondary" id="btnVolverOrdenes">← Volver</a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+
+        @* Info general *@
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Información de la orden</span>
+                <span class="badge bg-@badge">@Model.Estado</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="text-muted" style="font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;">Restaurante</div>
+                        <div class="fw-bold">@(Model.Restaurante?.Nombre ?? "—")</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted" style="font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;">Fecha</div>
+                        <div>@Model.CreadoEn.ToString("dd/MM/yyyy HH:mm")</div>
+                    </div>
+                    @if (Model.ReservaId > 0)
+                    {
+                        <div class="col-sm-6">
+                            <div class="text-muted" style="font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;">Reserva ID</div>
+                            <div><code>#@Model.ReservaId</code></div>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.Notas))
+                    {
+                        <div class="col-12">
+                            <div class="text-muted" style="font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;">Notas</div>
+                            <div class="text-muted">@Model.Notas</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @* Tabla de items *@
+        <div class="card mb-4">
+            <div class="card-header">Productos</div>
+            <div class="card-body p-0">
+                @if (Model.Items != null && Model.Items.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="tablaItems">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-center">Cant.</th>
+                                    <th class="text-end">Precio Unit.</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Items)
+                                {
+                                    <tr>
+                                        <td>@item.NombreProducto</td>
+                                        <td class="text-center">@item.Cantidad</td>
+                                        <td class="text-end">RD$ @item.PrecioUnitario.ToString("N2")</td>
+                                        <td class="text-end" style="color:var(--accent);">
+                                            RD$ @item.Subtotal.ToString("N2")
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="p-3 text-muted text-center">Sin items registrados.</div>
+                }
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-lg-4">
+
+        @* Resumen de totales *@
+        <div class="card mb-3">
+            <div class="card-header">Resumen</div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border-color);">
+                    <span class="text-muted">Subtotal</span>
+                    <span>RD$ @subtotal.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border-color);">
+                    <span class="text-muted">ITBIS (18%)</span>
+                    <span>RD$ @itbis.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-content-between py-3">
+                    <strong style="font-size:1.1rem;">Total</strong>
+                    <strong style="font-size:1.2rem;color:var(--accent);">RD$ @total.ToString("N2")</strong>
+                </div>
+            </div>
+        </div>
+
+        @* Acciones según estado *@
+        <div class="card">
+            <div class="card-body d-grid gap-2">
+                @if (Model.Estado == "Pendiente")
+                {
+                    <a asp-controller="Pago" asp-action="Pagar"
+                       asp-route-ordenId="@Model.Id"
+                       class="btn btn-primary" id="btnPagarOrden">
+                        💳 Proceder al Pago
+                    </a>
+                }
+                @if (Model.Estado is "Completada" or "Entregada")
+                {
+                    <a asp-controller="Resena" asp-action="Crear"
+                       asp-route-ordenId="@Model.Id"
+                       asp-route-restauranteId="@Model.RestauranteId"
+                       class="btn btn-outline-warning" id="btnCalificar">
+                        ⭐ Calificar Experiencia
+                    </a>
+                }
+                else if (Model.Estado != "Cancelada")
+                {
+                    <div class="alert alert-sm alert-secondary text-center mb-0" style="font-size: 0.85rem; padding: 0.5rem;">
+                         🕒 La calificación estará disponible cuando la orden sea <b>Completada</b>.
+                    </div>
+                }
+                <a asp-action="Index" class="btn btn-outline-secondary" id="btnVolverOrdenesDet">
+                    ← Volver a Mis Órdenes
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>

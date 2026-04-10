@@ -1,4 +1,4 @@
-﻿using FoodBook_SS.Domain.Base;
+using FoodBook_SS.Domain.Base;
 using FoodBook_SS.Domain.Entities.Configuration;
 using FoodBook_SS.Domain.Entities.Order;
 using FoodBook_SS.Domain.Entities.Payment;
@@ -23,6 +23,8 @@ namespace FoodBook_SS.Domain.Repository
         Task<OperationResult> GetByPropietarioIdAsync(int propietarioId);
         Task<OperationResult> SearchAsync(string? nombre, string? ciudad, string? tipoCocina);
         Task<OperationResult> BuscarAsync(string? ciudad, string? tipoCocina, string? termino);
+        Task<OperationResult> SaveMesaAsync(Mesa mesa);
+        Task<OperationResult> ActualizarCalificacionAsync(int restauranteId);
     }
 
     public interface IReservationRepository : IBaseRepository<Reserva>
@@ -30,6 +32,7 @@ namespace FoodBook_SS.Domain.Repository
         Task<OperationResult> GetByClienteIdAsync(int clienteId);
         Task<OperationResult> GetByRestauranteAndEstadoAsync(int restauranteId, string estado);
         Task<OperationResult> GetByRestauranteAndFechaAsync(int restauranteId, DateOnly fecha);
+        Task<OperationResult> GetAllByRestauranteAsync(int restauranteId);
         Task<OperationResult> GetMesasDisponiblesAsync(int restauranteId, DateOnly fecha, TimeOnly hora, int personas);
         Task<OperationResult> GetByCodigoConfirmacionAsync(string codigo);
         Task<OperationResult> ConfirmarReservaAsync(int reservaId, int actorId);
@@ -79,6 +82,7 @@ namespace FoodBook_SS.Domain.Repository
         Task<OperationResult> GetByClienteIdAsync(int clienteId);
         Task<OperationResult> ModerarAsync(int resenaId, bool visible, int moderadorId);
         Task<bool> ClienteYaResenoAsync(int clienteId, int restauranteId);
+        Task<OperationResult> ResponderAsync(int resenaId, string respuesta);
     }
 
     public interface IAuditRepository
@@ -87,5 +91,6 @@ namespace FoodBook_SS.Domain.Repository
                            string? datosAnteriores, string? datosNuevos,
                            string resultado, string? detalle);
         Task<IEnumerable<object>> GetByEntidadAsync(string entidad, string entidadId);
+        Task<IEnumerable<object>> GetAllAsync();
     }
 }

@@ -1,10 +1,9 @@
-﻿using FoodBook_SS.Application.Base;
+using FoodBook_SS.Application.Base;
 using FoodBook_SS.Application.Dtos.Reservation;
 using FoodBook_SS.Application.Interfaces;
 using FoodBook_SS.Domain.Base;
 using FoodBook_SS.Domain.Entities.Reservation;
 using FoodBook_SS.Domain.Repository;
-
 namespace FoodBook_SS.Application.Services
 {
     public class ReservationService : IReservationService
@@ -12,50 +11,45 @@ namespace FoodBook_SS.Application.Services
         private readonly IReservationRepository _repo;
         private readonly IAuditService _audit;
         private readonly INotificationService _notify;
-
         public ReservationService(IReservationRepository repo, IAuditService audit, INotificationService notify)
         { _repo = repo; _audit = audit; _notify = notify; }
-
         public Task<OperationResult> GetAllAsync() => _repo.GetAllAsync(r => true);
-
         public Task<OperationResult> GetByClienteAsync(int clienteId) => _repo.GetByClienteIdAsync(clienteId);
-
-        
         public Task<OperationResult> GetAllByClienteAsync(int clienteId) => _repo.GetByClienteIdAsync(clienteId);
-
         public Task<OperationResult> GetByRestauranteAsync(int restauranteId, string? estado) =>
             estado is null
                 ? _repo.GetByRestauranteAndFechaAsync(restauranteId, DateOnly.FromDateTime(DateTime.Today))
                 : _repo.GetByRestauranteAndEstadoAsync(restauranteId, estado);
-
-        
-        public Task<OperationResult> GetAllByRestauranteAsync(int restauranteId, string? estado) =>
-            GetByRestauranteAsync(restauranteId, estado);
-
+        public async Task<OperationResult> GetAllByRestauranteAsync(int restauranteId, string? estado)
+        {
+            if (estado is null)
+            {
+                return await _repo.GetAllByRestauranteAsync(restauranteId);
+            }
+            return await _repo.GetByRestauranteAndEstadoAsync(restauranteId, estado);
+        }
         public Task<OperationResult> GetByCodigoAsync(string codigo) =>
             _repo.GetByCodigoConfirmacionAsync(codigo);
-
         public Task<OperationResult> GetMesasDisponiblesAsync(int rid, DateOnly fecha, TimeOnly hora, int personas) =>
             _repo.GetMesasDisponiblesAsync(rid, fecha, hora, personas);
-
         public async Task<OperationResult> GetByIdAsync(int id)
         {
             var r = await _repo.GetEntityByIdAsync(id);
             return r is null ? OperationResult.Fail("Reserva no encontrada.") : OperationResult.Ok(MapToDto(r));
         }
-
         public Task<OperationResult> SaveAsync(SaveReservationDto dto) => CreateAsync(dto, 0);
-
-        
         public async Task<OperationResult> CreateAsync(SaveReservationDto dto, int clienteId)
         {
             var disp = await _repo.GetMesasDisponiblesAsync(dto.RestauranteId, dto.FechaReserva, dto.HoraReserva, dto.NumeroPersonas);
             if (!disp.Success) return disp;
-
+            var mesas = (IEnumerable<FoodBook_SS.Domain.Entities.Configuration.Mesa>)disp.Data;
+            if (!mesas.Any(m => m.Id == dto.MesaId))
+                return OperationResult.Fail("La mesa seleccionada no está disponible o no tiene capacidad suficiente.");
             var reserva = new Reserva
             {
                 ClienteId = clienteId,
                 RestauranteId = dto.RestauranteId,
+                MesaId = dto.MesaId,
                 FechaReserva = dto.FechaReserva,
                 HoraReserva = dto.HoraReserva,
                 NumeroPersonas = dto.NumeroPersonas,
@@ -70,7 +64,6 @@ namespace FoodBook_SS.Application.Services
             await _notify.EnviarConfirmacionReservaAsync(clienteId, reserva.Id);
             return OperationResult.Ok(reserva.Id, "Reserva creada.");
         }
-
         public async Task<OperationResult> UpdateAsync(int id, UpdateReservationDto dto)
         {
             var r = await _repo.GetEntityByIdAsync(id);
@@ -84,8 +77,6 @@ namespace FoodBook_SS.Application.Services
             r.ActualizadoEn = DateTime.UtcNow;
             return await _repo.UpdateEntityAsync(r);
         }
-
-        
         public async Task<OperationResult> UpdateAsync(int id, UpdateReservationDto dto, int actorId)
         {
             var result = await UpdateAsync(id, dto);
@@ -93,7 +84,6 @@ namespace FoodBook_SS.Application.Services
                 await _audit.RegistrarAsync(actorId, "UPDATE_RESERVA", "Reserva", id.ToString());
             return result;
         }
-
         public async Task<OperationResult> ConfirmarAsync(int id, int actorId)
         {
             var r = await _repo.ConfirmarReservaAsync(id, actorId);
@@ -105,7 +95,6 @@ namespace FoodBook_SS.Application.Services
             }
             return r;
         }
-
         public async Task<OperationResult> CancelarAsync(int id, int actorId, string? motivo)
         {
             var reserva = await _repo.GetEntityByIdAsync(id);
@@ -114,10 +103,8 @@ namespace FoodBook_SS.Application.Services
             if (r.Success) await _notify.EnviarCancelacionReservaAsync(reserva.ClienteId, id, motivo);
             return r;
         }
-
         public Task<OperationResult> CompletarAsync(int id, int actorId) => _repo.CompletarReservaAsync(id, actorId);
         public Task<OperationResult> MarcarNoShowAsync(int id, int actorId) => _repo.MarcarNoShowAsync(id, actorId);
-
         private static ReservationDto MapToDto(Reserva r) => new()
         {
             Id = r.Id,
@@ -131,3 +118,4 @@ namespace FoodBook_SS.Application.Services
         };
     }
 }
+

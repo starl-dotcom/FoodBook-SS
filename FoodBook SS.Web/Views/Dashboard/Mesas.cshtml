@@ -1,0 +1,208 @@
+@model IEnumerable<FoodBook_SS.Domain.Entities.Configuration.Mesa>
+@{
+    ViewData["Title"] = "Gestión de Mesas";
+    var mesas        = Model?.ToList() ?? new List<FoodBook_SS.Domain.Entities.Configuration.Mesa>();
+    var restId       = (int)(ViewBag.RestauranteId ?? 0);
+    var restaurantes = ViewBag.Restaurantes as List<FoodBook_SS.Application.Dtos.Restaurant.RestaurantDto>
+                       ?? new List<FoodBook_SS.Application.Dtos.Restaurant.RestaurantDto>();
+
+    var disponibles = mesas.Count(m => m.Activa);
+    var ocupadas    = mesas.Count(m => !m.Activa);
+}
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h2>🪑 Gestión de Mesas</h2>
+    @if (restId > 0)
+    {
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAgregarMesa"
+                id="btnAbrirAgregarMesa">
+            ➕ Agregar Mesa
+        </button>
+    }
+</div>
+
+
+
+@* Selector restaurante *@
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label">Restaurante</label>
+                <select name="restauranteId" class="form-select" onchange="this.form.submit()" id="selectorRestaurante">
+                    @foreach (var r in restaurantes)
+                    {
+                        <option value="@r.Id" selected="@(restId == r.Id)">@r.Nombre</option>
+                    }
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (restId == 0)
+{
+    <div class="alert alert-info">Selecciona un restaurante para ver sus mesas.</div>
+}
+else if (!mesas.Any())
+{
+    <div class="alert alert-warning">
+        Este restaurante no tiene mesas configuradas.
+        Usa el botón <strong>➕ Agregar Mesa</strong> para crear la primera.
+    </div>
+}
+else
+{
+    @* Resumen *@
+    <div class="row g-3 mb-4">
+        <div class="col-sm-4">
+            <div class="kpi-card kpi-success">
+                <div class="kpi-label">Disponibles</div>
+                <div class="kpi-value" id="kpiDisponibles">@disponibles</div>
+                <div class="kpi-icon">✅</div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="kpi-card kpi-danger">
+                <div class="kpi-label">No Disponibles</div>
+                <div class="kpi-value" id="kpiOcupadas">@ocupadas</div>
+                <div class="kpi-icon">🔴</div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="kpi-card">
+                <div class="kpi-label">Total</div>
+                <div class="kpi-value" id="kpiTotal">@mesas.Count</div>
+                <div class="kpi-icon">🪑</div>
+            </div>
+        </div>
+    </div>
+
+    @* Grid de mesas *@
+    <div class="card mb-4">
+        <div class="card-header">Layout de Mesas — Haz clic en una mesa para cambiar su disponibilidad</div>
+        <div class="card-body">
+            <div class="mesa-grid" id="mesasGrid">
+                @foreach (var mesa in mesas.OrderBy(m => m.NumeroMesa))
+                {
+                    <div class="mesa-card @(mesa.Activa ? "disponible" : "ocupada")"
+                         id="mesaCard_@mesa.Id"
+                         data-bs-toggle="modal"
+                         data-bs-target="#modalToggleMesa"
+                         data-mesa-id="@mesa.Id"
+                         data-mesa-num="@mesa.NumeroMesa"
+                         data-mesa-cap="@mesa.Capacidad"
+                         data-mesa-disponible="@(mesa.Activa ? "true" : "false")"
+                         style="cursor:pointer;">
+                        <div class="mesa-num">@mesa.NumeroMesa</div>
+                        <div class="mesa-cap">Cap: @mesa.Capacidad pax</div>
+                        <div class="mesa-status" style="color:@(mesa.Activa ? "var(--success)" : "var(--danger)")">
+                            @(mesa.Activa ? "● Disponible" : "● No disponible")
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* Leyenda *@
+    <div class="d-flex gap-4 text-muted" style="font-size:.82rem;">
+        <span><span style="color:var(--success);">●</span> Disponible — Mesa lista para recibir clientes</span>
+        <span><span style="color:var(--danger);">●</span> No disponible — Mesa ocupada o en mantenimiento</span>
+    </div>
+}
+
+@* Modal Agregar Nueva Mesa *@
+<div class="modal fade" id="modalAgregarMesa" tabindex="-1" aria-labelledby="modalAgregarMesaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalAgregarMesaLabel">➕ Agregar Nueva Mesa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="AgregarMesa" method="post" id="formAgregarMesa">
+                @Html.AntiForgeryToken()
+                <input name="RestauranteId" type="hidden" value="@restId" />
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="inputNumeroMesa" class="form-label">Número / Nombre de Mesa <span class="text-danger">*</span></label>
+                        <input id="inputNumeroMesa" name="NumeroMesa" type="text" class="form-control"
+                               placeholder="Ej: M-01, VIP-1, Terraza-3" required maxlength="20" />
+                        <div class="form-text">Identificador único de la mesa en este restaurante.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputCapacidad" class="form-label">Capacidad (personas) <span class="text-danger">*</span></label>
+                        <input id="inputCapacidad" name="Capacidad" type="number" class="form-control"
+                               min="1" max="50" placeholder="Ej: 4" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputUbicacion" class="form-label">Ubicación <span class="text-muted">(opcional)</span></label>
+                        <input id="inputUbicacion" name="Ubicacion" type="text" class="form-control"
+                               placeholder="Ej: Terraza, Interior, VIP..." maxlength="100" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btnGuardarMesa">🪑 Guardar Mesa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* Modal Toggle Disponibilidad *@
+<div class="modal fade" id="modalToggleMesa" tabindex="-1" aria-labelledby="modalToggleMesaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalToggleMesaLabel">🪑 Cambiar Disponibilidad</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="ToggleMesa" method="post" id="formToggleMesa">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <p class="text-muted">
+                        Mesa <strong id="modalMesaNum"></strong> —
+                        Capacidad: <strong id="modalMesaCap"></strong> personas.
+                    </p>
+                    <p id="modalMesaEstadoTexto"></p>
+                    <input name="mesaId"       type="hidden" id="toggleMesaId" />
+                    <input name="restauranteId" type="hidden" value="@restId" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn" id="btnToggleConfirm">Confirmar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.getElementById('modalToggleMesa')?.addEventListener('show.bs.modal', function (event) {
+        const card        = event.relatedTarget;
+        const mesaId      = card.getAttribute('data-mesa-id');
+        const mesaNum     = card.getAttribute('data-mesa-num');
+        const mesaCap     = card.getAttribute('data-mesa-cap');
+        const disponible  = card.getAttribute('data-mesa-disponible') === 'true';
+
+        document.getElementById('toggleMesaId').value     = mesaId;
+        document.getElementById('modalMesaNum').textContent = mesaNum;
+        document.getElementById('modalMesaCap').textContent = mesaCap;
+
+        const estadoTexto = document.getElementById('modalMesaEstadoTexto');
+        const btnToggle   = document.getElementById('btnToggleConfirm');
+
+        if (disponible) {
+            estadoTexto.innerHTML = 'Esta mesa está <strong style="color:var(--success)">Disponible</strong>. ¿Deseas marcarla como No Disponible?';
+            btnToggle.className   = 'btn btn-danger';
+            btnToggle.textContent = 'Marcar No Disponible';
+        } else {
+            estadoTexto.innerHTML = 'Esta mesa está <strong style="color:var(--danger)">No Disponible</strong>. ¿Deseas marcarla como Disponible?';
+            btnToggle.className   = 'btn btn-success';
+            btnToggle.textContent = 'Marcar Disponible';
+        }
+    });
+</script>
+}

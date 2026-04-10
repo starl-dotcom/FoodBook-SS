@@ -1,34 +1,23 @@
-﻿using FoodBook_SS.Application.Interfaces;
-using Microsoft.Extensions.Configuration;
+using FoodBook_SS.Application.Interfaces;
+using FoodBook_SS.Infrastructure.Services;
 using Microsoft.Extensions.Logging;
-
 namespace FoodBook_SS.Infrastructure.Adapters
 {
-    
     public class EmailNotificationAdapter : INotificationSender
     {
-        private readonly IConfiguration _config;
+        private readonly NotificationInbox _inbox;
         private readonly ILogger<EmailNotificationAdapter> _logger;
-
-        public EmailNotificationAdapter(IConfiguration config, ILogger<EmailNotificationAdapter> logger)
+        public EmailNotificationAdapter(NotificationInbox inbox, ILogger<EmailNotificationAdapter> logger)
         {
-            _config = config;
+            _inbox = inbox;
             _logger = logger;
         }
-
-        public async Task EnviarAsync(string destinatario, string asunto, string mensaje)
+        public Task EnviarAsync(string destinatario, string asunto, string mensaje)
         {
-            try
-            {
-                
-                _logger.LogInformation("Email enviado a {Destinatario} | Asunto: {Asunto}", destinatario, asunto);
-                await Task.CompletedTask;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al enviar email a {Destinatario}", destinatario);
-                throw;
-            }
+            _inbox.Push(destinatario, asunto, mensaje);
+            _logger.LogInformation("📬 Notificación → {Destinatario} | {Asunto}", destinatario, asunto);
+            return Task.CompletedTask;
         }
     }
 }
+

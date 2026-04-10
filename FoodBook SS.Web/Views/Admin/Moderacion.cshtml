@@ -1,0 +1,71 @@
+@model IEnumerable<FoodBook_SS.Domain.Entities.Review.Resena>
+@{
+    ViewData["Title"] = "Moderación Global de Reseñas";
+}
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2>🛡️ Moderación de Reseñas</h2>
+        <p class="text-dim">Supervisa y controla el contenido publicado por los usuarios</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">← Volver</a>
+</div>
+
+<div class="card border-0 shadow-sm" style="background: var(--card-bg);">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-darker">
+                <tr>
+                    <th class="ps-4">Restaurante</th>
+                    <th>Cliente</th>
+                    <th style="width: 30%;">Reseña</th>
+                    <th class="text-center">Calificación</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-end pe-4">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in (Model ?? Enumerable.Empty<FoodBook_SS.Domain.Entities.Review.Resena>()))
+                {
+                    <tr>
+                        <td class="ps-4">
+                            <div class="font-bold">@r.Restaurante?.Nombre</div>
+                            <small class="text-dim">ID: #@r.RestauranteId</small>
+                        </td>
+                        <td>
+                            <div>@r.Cliente?.Nombre @r.Cliente?.Apellido</div>
+                        </td>
+                        <td>
+                            <div class="small fst-italic">"@r.Comentario"</div>
+                            @if (!string.IsNullOrEmpty(r.Respuesta))
+                            {
+                                <div class="mt-1 x-small text-accent">
+                                    <strong>Respuesta:</strong> @r.Respuesta
+                                </div>
+                            }
+                        </td>
+                        <td class="text-center">
+                            @for(int i=1; i<=5; i++) {
+                                <span class="@(i <= r.Calificacion ? "text-warning" : "text-dim")">★</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            @if (r.Visible) { <span class="badge bg-success">Visible</span> }
+                            else { <span class="badge bg-danger">Oculta</span> }
+                        </td>
+                        <td class="text-end pe-4">
+                            <form asp-action="ModerarResena" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input name="resenaId" type="hidden" value="@r.Id" />
+                                <input name="visible" type="hidden" value="@(!r.Visible ? "true" : "false")" />
+                                <button type="submit" class="btn btn-sm @(r.Visible ? "btn-outline-danger" : "btn-outline-success")">
+                                    @(r.Visible ? "👁️‍🗨️ Ocultar" : "👁️ Mostrar")
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

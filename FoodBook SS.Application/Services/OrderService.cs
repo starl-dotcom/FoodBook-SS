@@ -1,4 +1,4 @@
-﻿using FoodBook_SS.Application.Base;
+using FoodBook_SS.Application.Base;
 using FoodBook_SS.Application.Dtos.Order;
 using FoodBook_SS.Application.Interfaces;
 using FoodBook_SS.Domain.Base;
@@ -44,7 +44,7 @@ namespace FoodBook_SS.Application.Services
             };
             var r = await _repo.SaveEntityAsync(orden);
             if (!r.Success) return r;
-            foreach (var item in dto.Items)
+            foreach (var item in dto.Items.Where(i => i.Cantidad > 0))
             {
                 var ar = await AgregarItemAsync(orden.Id, item);
                 if (!ar.Success) return ar;

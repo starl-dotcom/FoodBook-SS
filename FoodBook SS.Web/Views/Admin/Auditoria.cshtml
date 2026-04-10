@@ -1,0 +1,52 @@
+@model IEnumerable<dynamic>
+@{
+    ViewData["Title"] = "Historial de Auditoría";
+}
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2>📜 Registro de Auditoría Global</h2>
+        <p class="text-dim">Seguimiento de todas las transacciones y cambios en el sistema</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">← Volver</a>
+</div>
+
+<div class="card border-0 shadow-sm" style="background: var(--card-bg);">
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0" style="font-size: .85rem;">
+            <thead class="bg-darker">
+                <tr>
+                    <th class="ps-3">Fecha/Hora</th>
+                    <th>Actor</th>
+                    <th>Acción</th>
+                    <th>Entidad</th>
+                    <th>Entidad ID</th>
+                    <th>Resultado</th>
+                    <th class="pe-3">Detalle</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null)
+                {
+                    @foreach (var log in Model)
+                    {
+                        <tr>
+                            <td class="ps-3">@log.FechaHora.ToString("dd/MM/yy HH:mm:ss")</td>
+                            <td><span class="text-dim">#@log.ActorId</span></td>
+                            <td><span class="badge bg-secondary">@log.Accion</span></td>
+                            <td>@log.Entidad</td>
+                            <td><code>@log.EntidadId</code></td>
+                            <td>
+                                @if (log.Resultado == "Exito") { <span class="text-success">✔</span> }
+                                else { <span class="text-danger">✖</span> }
+                            </td>
+                            <td class="text-truncate pe-3" style="max-width: 250px;" title="@log.Detalle">
+                                @log.Detalle
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

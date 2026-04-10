@@ -12,43 +12,80 @@
                 <small>Crea tu cuenta</small>
             </div>
             <div class="card-body">
-                <form method="post" action="/Account/Register">
+                
+                <form asp-controller="Account" asp-action="Register" method="post" id="registerForm" novalidate>
                     @Html.AntiForgeryToken()
 
-                    @if (TempData["Error"] != null)
-                    {
-                        <div class="alert alert-danger">@TempData["Error"]</div>
-                    }
+                    @* Errores del servidor *@
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"
+                         style="display:@(ViewData.ModelState.IsValid ? "none" : "block")"></div>
 
                     <div class="row mb-3">
                         <div class="col">
-                            <label class="form-label">Nombre</label>
-                            <input type="text" name="Nombre" class="form-control" />
+                            <label asp-for="Nombre" class="form-label">Nombre</label>
+                           
+                            <input asp-for="Nombre" class="form-control" />
+                            <span asp-validation-for="Nombre" class="text-danger small"></span>
                         </div>
                         <div class="col">
-                            <label class="form-label">Apellido</label>
-                            <input type="text" name="Apellido" class="form-control" />
+                            <label asp-for="Apellido" class="form-label">Apellido</label>
+                            <input asp-for="Apellido" class="form-control" />
+                            <span asp-validation-for="Apellido" class="text-danger small"></span>
                         </div>
                     </div>
+
                     <div class="mb-3">
-                        <label class="form-label">Correo electrónico</label>
-                        <input type="email" name="Email" class="form-control" />
+                        <label asp-for="Email" class="form-label">Correo electrónico</label>
+                        <input asp-for="Email" type="email" class="form-control" autocomplete="email" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
                     </div>
+
                     <div class="mb-3">
-                        <label class="form-label">Teléfono <small class="text-muted">(opcional)</small></label>
-                        <input type="text" name="Telefono" class="form-control" />
+                        <label asp-for="Telefono" class="form-label">
+                            Teléfono <small class="text-muted">(opcional)</small>
+                        </label>
+                        <input asp-for="Telefono" type="tel" class="form-control" />
+                        <span asp-validation-for="Telefono" class="text-danger small"></span>
                     </div>
+
                     <div class="mb-3">
-                        <label class="form-label">Contraseña</label>
-                        <input type="password" name="Password" class="form-control" />
+                        <label asp-for="Password" class="form-label">Contraseña</label>
+                        <input asp-for="Password" type="password" class="form-control" autocomplete="new-password" />
+                        <span asp-validation-for="Password" class="text-danger small"></span>
                     </div>
-                    <input type="hidden" name="RolId" value="1" />
-                    <button type="submit" class="btn btn-dark w-100">Registrarse</button>
+
+                    
+                    <input asp-for="RolId" type="hidden" value="1" />
+
+                    <button type="submit" class="btn btn-dark w-100" id="btnRegister">
+                        Registrarse
+                    </button>
                 </form>
             </div>
             <div class="card-footer text-center text-muted">
-                ¿Ya tienes cuenta? <a href="/Account/Login">Inicia sesión</a>
+                ¿Ya tienes cuenta?
+              
+                <a asp-controller="Account" asp-action="Login">Inicia sesión</a>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(document).ready(function () {
+            const $registerForm = $('#registerForm');
+
+            $registerForm.on('submit', function (e) {
+                
+                if ($(this).valid()) {
+                    const btn = document.getElementById('btnRegister');
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creando cuenta...';
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,191 @@
+@model FoodBook_SS.Web.Models.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard — Estadísticas";
+    var labels  = Model.VentasPorFecha.Select(v => v.Fecha.ToString("dd/MM")).ToList();
+    var valores  = Model.VentasPorFecha.Select(v => (double)v.TotalVentas).ToList();
+}
+
+<div class="page-header">
+    <h2>📊 Dashboard Administrativo</h2>
+</div>
+
+@* Selector de restaurante y periodo *@
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row gx-3 gy-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label">Restaurante</label>
+                <select class="form-select" id="restauranteId" name="restauranteId" onchange="this.form.submit()">
+                    <option value="">— Seleccionar —</option>
+                    @foreach (var res in Model.Restaurantes)
+                    {
+                        <option value="@res.Id" selected="@(Model.RestauranteIdSeleccionado == res.Id)">
+                            @res.Nombre
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Período</label>
+                <select class="form-select" id="diasPasados" name="diasPasados" onchange="this.form.submit()">
+                    @{ string d7 = Model.DiasPasados == 7 ? "selected" : ""; }
+                    @{ string d30 = Model.DiasPasados == 30 ? "selected" : ""; }
+                    @{ string d90 = Model.DiasPasados == 90 ? "selected" : ""; }
+                    @{ string d365 = Model.DiasPasados == 365 ? "selected" : ""; }
+                    <option value="7"   selected="@(Model.DiasPasados ==  7)">Últimos 7 días</option>
+                    <option value="30"  selected="@(Model.DiasPasados ==  30)">Últimos 30 días</option>
+                    <option value="90"  selected="@(Model.DiasPasados ==  90)">Últimos 90 días</option>
+                    <option value="365" selected="@(Model.DiasPasados == 365)">Último año</option>
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (!Model.Restaurantes.Any())
+{
+    <div class="alert alert-info">
+        No tienes restaurantes registrados. Cuando agregues uno, verás sus métricas aquí.
+    </div>
+}
+else if (Model.RestauranteIdSeleccionado.HasValue)
+{
+    @* KPI Cards *@
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-md-3">
+            <div class="kpi-card">
+                <div class="kpi-label">Total de Ingresos</div>
+                <div class="kpi-value" id="kpiIngresos">RD$ @Model.TotalIngresos.ToString("N2")</div>
+                <small class="text-muted">Últimos @Model.DiasPasados días</small>
+                <div class="kpi-icon">💰</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="kpi-card kpi-success">
+                <div class="kpi-label">Órdenes Completadas</div>
+                <div class="kpi-value" id="kpiOrdenes">@Model.TotalOrdenes</div>
+                <small class="text-muted">Últimos @Model.DiasPasados días</small>
+                <div class="kpi-icon">🧾</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="kpi-card kpi-warning">
+                <div class="kpi-label">Calificación Promedio</div>
+                <div class="kpi-value" id="kpiCalificacion">
+                    @Model.CalificacionPromedio.ToString("0.0") ⭐
+                </div>
+                <small class="text-muted">De los clientes</small>
+                <div class="kpi-icon">⭐</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="kpi-card kpi-info">
+                <div class="kpi-label">Reservas de Hoy</div>
+                <div class="kpi-value" id="kpiReservasHoy">
+                    @Model.TotalReservasHoy
+                </div>
+                <small class="text-muted">Para @DateTime.Today.ToString("dd/MM")</small>
+                <div class="kpi-icon">📅</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        @* Gráfico ventas *@
+        <div class="col-lg-7">
+            <div class="card h-100">
+                <div class="card-header">📈 Ventas por Fecha</div>
+                <div class="card-body">
+                    @if (!Model.VentasPorFecha.Any())
+                    {
+                        <div class="text-muted text-center py-5">No hay ventas en este período.</div>
+                    }
+                    else
+                    {
+                        <canvas id="graficoVentas" height="250"></canvas>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @* Top productos *@
+        <div class="col-lg-5">
+            <div class="card h-100">
+                <div class="card-header">🏆 Top 10 Productos</div>
+                <div class="card-body p-0">
+                    @if (!Model.ProductosMasOrdenados.Any())
+                    {
+                        <div class="text-muted text-center py-5">Sin datos de productos.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table mb-0" id="tablaTopProductos">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Producto</th>
+                                        <th class="text-end">Vendidos</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{ var rank = 1; }
+                                    @foreach (var prod in Model.ProductosMasOrdenados.Take(10))
+                                    {
+                                        <tr>
+                                            <td>
+                                                @if (rank == 1) { <span>🥇</span> }
+                                                else if (rank == 2) { <span>🥈</span> }
+                                                else if (rank == 3) { <span>🥉</span> }
+                                                else { <span class="text-muted">@rank</span> }
+                                            </td>
+                                            <td>@prod.NombreProducto</td>
+                                            <td class="text-end"><strong style="color:var(--accent);">@prod.TotalVendido</strong></td>
+                                        </tr>
+                                        rank++;
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+@if (Model.VentasPorFecha.Any())
+{
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(labels));
+        const data   = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(valores));
+
+        new Chart(document.getElementById('graficoVentas'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Ventas (RD$)',
+                    data,
+                    backgroundColor: 'rgba(249,115,22,0.5)',
+                    borderColor:     'rgba(249,115,22,1)',
+                    borderWidth: 2,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { labels: { color: '#94a3b8' } }
+                },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { color: '#2a3447' } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: '#2a3447' } }
+                }
+            }
+        });
+    </script>
+}
+}

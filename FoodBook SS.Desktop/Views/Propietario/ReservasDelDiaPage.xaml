@@ -1,0 +1,78 @@
+<Page x:Class="FoodBook_SS.Desktop.Views.Propietario.ReservasDelDiaPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:conv="clr-namespace:FoodBook_SS.Desktop.Converters"
+      Title="Reservas del Día" Background="{StaticResource BrBgDeep}">
+    <Page.Resources>
+        <conv:EstadoColorConverter x:Key="EstadoColor"/>
+        <conv:StringToVisibilityConverter x:Key="StrVis"/>
+        <conv:BoolToVisibilityConverter x:Key="BoolVis"/>
+    </Page.Resources>
+    <Grid Margin="28,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+            <TextBlock Text="📅 Reservas del Día" Style="{StaticResource H1}"/>
+            <Button Content="↻ Actualizar" Style="{StaticResource BtnSecondary}"
+                    Command="{Binding LoadCommand}" Margin="16,0,0,0" VerticalAlignment="Center"/>
+        </StackPanel>
+        <Border Grid.Row="1" Background="#3B1515" CornerRadius="6" Padding="10,7" Margin="0,0,0,12"
+                Visibility="{Binding ErrorMessage, Converter={StaticResource StrVis}}">
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource BrDanger}"/>
+        </Border>
+        <Border Grid.Row="1" Background="#1A3B26" CornerRadius="6" Padding="10,7" Margin="0,0,0,12"
+                Visibility="{Binding SuccessMessage, Converter={StaticResource StrVis}}">
+            <TextBlock Text="{Binding SuccessMessage}" Foreground="{StaticResource BrSuccess}"/>
+        </Border>
+        <ListBox Grid.Row="2" Background="Transparent" BorderThickness="0"
+                 ItemsSource="{Binding Reservas}" SelectedItem="{Binding Selected}"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Border Style="{StaticResource Card}" Width="680" Margin="0,0,0,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{Binding NombreCliente}" Style="{StaticResource H2}" FontSize="15"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                    <TextBlock Text="📅 " Style="{StaticResource Body}"/>
+                                    <TextBlock Text="{Binding FechaReserva}" Style="{StaticResource Body}"/>
+                                    <TextBlock Text="  ⏰ " Style="{StaticResource Body}"/>
+                                    <TextBlock Text="{Binding HoraReserva}" Style="{StaticResource Body}"/>
+                                    <TextBlock Text="  👥 " Style="{StaticResource Body}"/>
+                                    <TextBlock Text="{Binding NumeroPersonas}" Style="{StaticResource Body}"/>
+                                    <TextBlock Text=" personas" Style="{StaticResource Body}"/>
+                                </StackPanel>
+                            </StackPanel>
+                            <Border Grid.Column="1" CornerRadius="20" Padding="12,5" VerticalAlignment="Top">
+                                <Border.Background>
+                                    <SolidColorBrush Color="{Binding Estado, Converter={StaticResource EstadoColor}}"/>
+                                </Border.Background>
+                                <TextBlock Text="{Binding Estado}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <Border Grid.Row="3" Style="{StaticResource Card}" Margin="0,12,0,0" Padding="16,12">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                <TextBlock Text="Reserva seleccionada: " Style="{StaticResource Body}" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding Selected.Id, StringFormat='#{0}'}"
+                           Foreground="{StaticResource BrAccent}" FontWeight="Bold" VerticalAlignment="Center" Margin="4,0,16,0"/>
+                <Button Content="✅ Confirmar"  Style="{StaticResource BtnSuccess}" Command="{Binding ConfirmarCommand}" Margin="0,0,8,0"/>
+                <Button Content="🏁 Completar"  Style="{StaticResource BtnPrimary}" Command="{Binding CompletarCommand}" Margin="0,0,8,0"/>
+                <Button Content="🚫 No Show"    Style="{StaticResource BtnSecondary}" Command="{Binding NoShowCommand}"  Margin="0,0,8,0"/>
+                <Button Content="❌ Cancelar"   Style="{StaticResource BtnDanger}"   Command="{Binding CancelarCommand}"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Page>
+

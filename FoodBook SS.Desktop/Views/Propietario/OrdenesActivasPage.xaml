@@ -1,0 +1,107 @@
+<Page x:Class="FoodBook_SS.Desktop.Views.Propietario.OrdenesActivasPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:conv="clr-namespace:FoodBook_SS.Desktop.Converters"
+      Title="Órdenes Activas" Background="{StaticResource BrBgDeep}">
+    <Page.Resources>
+        <conv:EstadoColorConverter x:Key="EstadoColor"/>
+        <conv:StringToVisibilityConverter x:Key="StrVis"/>
+        <conv:BoolToVisibilityConverter x:Key="BoolVis"/>
+    </Page.Resources>
+    <Grid Margin="32,24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,20">
+            <TextBlock Text="🧾 Órdenes Activas" Style="{StaticResource H1}"/>
+            <Button Content="↻ Refrescar" Style="{StaticResource BtnSecondary}"
+                    Command="{Binding LoadCommand}" Margin="16,0,0,0" VerticalAlignment="Center"/>
+        </StackPanel>
+        <Border Grid.Row="1" Background="#3B1515" CornerRadius="6" Padding="12,8" Margin="0,0,0,12"
+                Visibility="{Binding ErrorMessage, Converter={StaticResource StrVis}}">
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource BrDanger}"/>
+        </Border>
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="⏳ Sincronizando órdenes..."
+                           Style="{StaticResource Body}" Margin="0,20"
+                           HorizontalAlignment="Center"
+                           Visibility="{Binding IsBusy, Converter={StaticResource BoolVis}}"/>
+                <ListBox ItemsSource="{Binding OrdenesActivas}" SelectedItem="{Binding Selected}" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <ContentPresenter />
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource Card}" Margin="0,0,0,12" Padding="15">
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding StringFormat='Orden #{0}', Path=Id}" Style="{StaticResource H2}" FontSize="16"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                                <TextBlock Text="📅 " Style="{StaticResource Body}"/>
+                                                <TextBlock Text="{Binding FechaOrden, StringFormat='{}dd/MMM hh:mm tt'}" Style="{StaticResource Body}"/>
+                                                <TextBlock Text="  🏷️ Reserva #" Style="{StaticResource Body}" Margin="10,0,0,0"/>
+                                                <TextBlock Text="{Binding ReservaId}" Style="{StaticResource Body}" FontWeight="Bold"/>
+                                            </StackPanel>
+                                            <ItemsControl ItemsSource="{Binding Items}" Margin="0,15,0,5">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="0,0,0,4">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="30"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Grid.Column="0" Text="{Binding Cantidad, StringFormat='{}{0}x'}" Foreground="{StaticResource BrAccent}" FontWeight="Bold"/>
+                                                            <TextBlock Grid.Column="1" Text="{Binding NombreProducto}" Style="{StaticResource Body}"/>
+                                                            <TextBlock Grid.Column="2" Text="{Binding Subtotal, StringFormat='RD${0:N2}'}" Foreground="{StaticResource BrTextDim}"/>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <Border Background="#0F172A" CornerRadius="4" Padding="10" Margin="0,10,0,0" 
+                                                    Visibility="{Binding Notas, Converter={StaticResource StrVis}}">
+                                                <TextBlock Text="{Binding StringFormat='Notas del Cliente: {0}', Path=Notas}" Foreground="{StaticResource BrWarning}" TextWrapping="Wrap"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                                            <Border CornerRadius="20" Padding="12,5" HorizontalAlignment="Right">
+                                                <Border.Background>
+                                                    <SolidColorBrush Color="{Binding Estado, Converter={StaticResource EstadoColor}}"/>
+                                                </Border.Background>
+                                                <TextBlock Text="{Binding Estado}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                                            </Border>
+                                            <TextBlock Text="{Binding Total, StringFormat='Total: RD${0:N2}'}" Style="{StaticResource H2}" Foreground="{StaticResource BrAccent}" Margin="0,15,0,0" TextAlignment="Right"/>
+                                        </StackPanel>
+                                    </Grid>
+                                    <StackPanel Orientation="Horizontal" Margin="0,15,0,0" HorizontalAlignment="Right">
+                                        <Button Content="{Binding DataContext.SiguienteEstadoTexto, RelativeSource={RelativeSource AncestorType=ListBox}}" 
+                                                Style="{StaticResource BtnPrimary}"
+                                                Command="{Binding DataContext.AvanzarCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                                IsHitTestVisible="True" Padding="20,8"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>
+

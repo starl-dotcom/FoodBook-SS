@@ -1,4 +1,4 @@
-﻿using FoodBook_SS.Application.Dtos.Review;
+using FoodBook_SS.Application.Dtos.Review;
 using FoodBook_SS.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +18,11 @@ namespace FoodBook_SS.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetByRestaurante(int restauranteId) =>
             Ok(await _reviewService.GetByRestauranteAsync(restauranteId));
+
+        [HttpGet]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> GetAll() =>
+            Ok(await _reviewService.GetAllAsync());
 
         [HttpGet("cliente")]
         [Authorize]

@@ -1,29 +1,33 @@
-﻿@model IEnumerable<FoodBook_SS.Domain.Entities.Order.Orden>
+@model IEnumerable<FoodBook_SS.Domain.Entities.Order.Orden>
 @{
     ViewData["Title"] = "Mis Órdenes";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="page-header">
     <h2>🧾 Mis Órdenes</h2>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-primary" id="btnNuevaOrden">
+        + Nueva Orden
+    </a>
 </div>
 
 @if (Model == null || !Model.Any())
 {
     <div class="alert alert-info">
-        No tienes órdenes aún. <a asp-controller="Home" asp-action="Index">Busca un restaurante</a>
+        No tienes órdenes aún.
+        <a asp-controller="Home" asp-action="Index" class="fw-bold ms-1">Busca un restaurante para ordenar →</a>
     </div>
 }
 else
 {
     <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead class="table-dark">
+        <table class="table table-hover align-middle" id="tablaOrdenes">
+            <thead>
                 <tr>
                     <th>#</th>
                     <th>Restaurante</th>
-                    <th>Subtotal</th>
-                    <th>ITBIS</th>
-                    <th>Total</th>
+                    <th class="text-end">Subtotal</th>
+                    <th class="text-end">ITBIS</th>
+                    <th class="text-end">Total</th>
                     <th>Estado</th>
                     <th>Fecha</th>
                     <th>Acciones</th>
@@ -32,34 +36,56 @@ else
             <tbody>
                 @foreach (var o in Model)
                 {
+                    var badge = o.Estado switch
+                    {
+                        "Confirmada" => "success",
+                        "Pendiente"  => "warning",
+                        "EnProceso"  => "info",
+                        "Entregada"  => "secondary",
+                        "Completada" => "secondary",
+                        "Cancelada"  => "danger",
+                        _            => "dark"
+                    };
                     <tr>
                         <td><code>#@o.Id</code></td>
-                        <td>@o.Restaurante?.Nombre</td>
-                        <td>RD$ @o.Subtotal.ToString("N2")</td>
-                        <td>RD$ @o.Impuesto.ToString("N2")</td>
-                        <td><strong>RD$ @o.Total.ToString("N2")</strong></td>
-                        <td>
-                            @{
-                                var badge = o.Estado switch
-                                {
-                                    "Confirmada" => "success",
-                                    "Pendiente" => "warning",
-                                    "EnProceso" => "info",
-                                    "Entregada" => "secondary",
-                                    "Cancelada" => "danger",
-                                    _ => "dark"
-                                };
-                            }
-                            <span class="badge bg-@badge">@o.Estado</span>
-                        </td>
+                        <td><strong>@o.Restaurante?.Nombre</strong></td>
+                        <td class="text-end">RD$ @o.Subtotal.ToString("N2")</td>
+                        <td class="text-end">RD$ @o.Impuesto.ToString("N2")</td>
+                        <td class="text-end"><strong style="color:var(--accent);">RD$ @o.Total.ToString("N2")</strong></td>
+                        <td><span class="badge bg-@badge">@o.Estado</span></td>
                         <td>@o.CreadoEn.ToString("dd/MM/yyyy HH:mm")</td>
                         <td>
-                            @if (o.Estado == "Confirmada")
-                            {
-                                <a asp-controller="Pago" asp-action="Pagar"
-                                   asp-route-ordenId="@o.Id"
-                                   class="btn btn-sm btn-outline-primary">Pagar</a>
-                            }
+                            <div class="d-flex gap-1 flex-wrap">
+                                @* Detalle siempre visible *@
+                                <a asp-action="Detalle" asp-route-id="@o.Id"
+                                   class="btn btn-sm btn-outline-secondary"
+                                   id="btnDetalle_@o.Id">Detalle</a>
+
+                                @* Pagar si está Pendiente *@
+                                @if (o.Estado == "Pendiente")
+                                {
+                                    <a asp-controller="Pago" asp-action="Pagar"
+                                       asp-route-ordenId="@o.Id"
+                                       class="btn btn-sm btn-outline-primary"
+                                       id="btnPagar_@o.Id">💳 Pagar</a>
+                                }
+
+                                @* Calificar solo si está Completada o Entregada  *@
+                                @if (o.Estado is "Completada" or "Entregada")
+                                {
+                                    <a asp-controller="Resena" asp-action="Crear"
+                                       asp-route-ordenId="@o.Id"
+                                       asp-route-restauranteId="@o.RestauranteId"
+                                       class="btn btn-sm btn-outline-warning"
+                                       id="btnCalificar_@o.Id">⭐ Calificar</a>
+                                }
+                                else if (o.Estado != "Cancelada")
+                                {
+                                    <button class="btn btn-sm btn-outline-secondary opacity-50" disabled
+                                            title="Solo disponible para órdenes entregadas/completadas"
+                                            id="btnCalificarDisabled_@o.Id">⭐ Calificar</button>
+                                }
+                            </div>
                         </td>
                     </tr>
                 }
@@ -67,4 +93,3 @@ else
         </table>
     </div>
 }
-

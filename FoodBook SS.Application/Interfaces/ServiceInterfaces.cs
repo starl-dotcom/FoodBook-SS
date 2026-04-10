@@ -1,4 +1,4 @@
-﻿using FoodBook_SS.Application.Base;
+using FoodBook_SS.Application.Base;
 using FoodBook_SS.Application.Dtos.Menu;
 using FoodBook_SS.Application.Dtos.Order;
 using FoodBook_SS.Application.Dtos.Payment;
@@ -29,6 +29,8 @@ namespace FoodBook_SS.Application.Interfaces
         Task<OperationResult> SearchAsync(string? nombre, string? ciudad, string? tipoCocina);
         Task<OperationResult> BuscarAsync(string? ciudad, string? tipoCocina, string? termino);
         Task<OperationResult> CreateAsync(SaveRestaurantDto dto, int propietarioId);
+        Task<OperationResult> AgregarMesaAsync(SaveMesaDto dto);
+        Task<OperationResult> ToggleEstadoAsync(int restauranteId, bool activo, int actorId);
     }
 
 
@@ -94,6 +96,7 @@ namespace FoodBook_SS.Application.Interfaces
         Task<OperationResult> GetByClienteAsync(int clienteId);
         Task<OperationResult> CreateAsync(SaveReviewDto dto, int clienteId);
         Task<OperationResult> ModerarAsync(int resenaId, bool visible, int moderadorId);
+        Task<OperationResult> ResponderAsync(int resenaId, string respuesta, int actorId);
     }
 
     
@@ -118,5 +121,6 @@ namespace FoodBook_SS.Application.Interfaces
                             object? datosAnteriores = null, object? datosNuevos = null,
                             string resultado = "Exito", string? detalle = null);
         Task<OperationResult> GetMetricasAsync(int restauranteId, DateOnly desde, DateOnly hasta);
+        Task<OperationResult> GetAllLogsAsync();
     }
 }

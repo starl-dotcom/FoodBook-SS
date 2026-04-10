@@ -1,56 +1,127 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="FoodBook SS — Plataforma de gestión de restaurantes, reservas y órdenes" />
     <title>@ViewData["Title"] — FoodBook SS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-dark bg-dark border-bottom mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">
-                    🍽️ FoodBook SS
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container">
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+                    🍽️ FoodBook <span style="color:var(--text-muted);font-weight:400;">SS</span>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                        data-bs-target="#navContent">
+                        data-bs-target="#navContent" aria-controls="navContent">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse" id="navContent">
-                    <ul class="navbar-nav me-auto">
+                    <ul class="navbar-nav me-auto gap-1">
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Home" asp-action="Index">Restaurantes</a>
+                            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")"
+                               asp-controller="Home" asp-action="Index">🏠 Restaurantes</a>
                         </li>
                         @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Reserva" asp-action="Index">Mis Reservas</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Orden" asp-action="Index">Mis Órdenes</a>
-                            </li>
-                            @if (User.IsInRole("Propietario") || User.IsInRole("Administrador"))
+                            @* Solo mostramos enlaces de cliente si NO es Propietario ni Admin *@
+                            if (!User.IsInRole("Propietario") && !User.IsInRole("Administrador"))
                             {
                                 <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+                                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Reserva" ? "active" : "")"
+                                       asp-controller="Reserva" asp-action="Index">📅 Mis Reservas</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Orden" ? "active" : "")"
+                                       asp-controller="Orden" asp-action="Index">🧾 Mis Órdenes</a>
+                                </li>
+                            }
+                            @if (User.IsInRole("Propietario"))
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")"
+                                       href="#" data-bs-toggle="dropdown">🏬 Mi Restaurante</a>
+                                    <ul class="dropdown-menu shadow">
+                                        <li><a class="dropdown-item" asp-controller="Dashboard" asp-action="Index">📈 Estadísticas</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Dashboard" asp-action="ReservasDelDia">📅 Reservas y Órdenes</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Dashboard" asp-action="Resenas">💬 Reseñas de Clientes</a></li>
+                                        <li><hr class="dropdown-divider" /></li>
+                                        <li><a class="dropdown-item" asp-controller="Dashboard" asp-action="Menu">🍴 Gestión de Menú</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Dashboard" asp-action="Mesas">🪑 Gestión de Mesas</a></li>
+                                    </ul>
+                                </li>
+                            }
+                            @if (User.IsInRole("Administrador"))
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")"
+                                       href="#" data-bs-toggle="dropdown">🛡️ Global Admin</a>
+                                    <ul class="dropdown-menu shadow">
+                                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="Index">📊 Panel General</a></li>
+                                        <li><hr class="dropdown-divider" /></li>
+                                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="Usuarios">👥 Gestión de Usuarios</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="Restaurantes">🏢 Gestión de Restaurantes</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="Moderacion">🛡️ Moderación Global</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="Auditoria">📜 Auditoría de Sistema</a></li>
+                                    </ul>
                                 </li>
                             }
                         }
                     </ul>
-                    <ul class="navbar-nav ms-auto">
+                    <ul class="navbar-nav ms-auto align-items-center gap-1">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
+                            @* ── Campana de Notificaciones  ──────── *@
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                                    👤 @User.Identity.Name
+                                <a class="nav-link position-relative" href="#" id="notifBell"
+                                   data-bs-toggle="dropdown" aria-expanded="false"
+                                   style="font-size:1.2rem; padding:.4rem .6rem;">
+                                    🔔
+                                    <span id="notifBadge"
+                                          style="display:none; position:absolute; top:4px; right:4px;
+                                                 background:#f97316; color:#fff; font-size:.6rem;
+                                                 font-weight:700; border-radius:50%; width:16px; height:16px;
+                                                 line-height:16px; text-align:center;">0</span>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end p-0"
+                                     id="notifPanel"
+                                     style="width:340px; background:rgba(15,23,42,.97);
+                                            border:1px solid rgba(255,255,255,.1);
+                                            border-radius:12px; overflow:hidden;
+                                            box-shadow:0 16px 48px rgba(0,0,0,.5);">
+                                    <div class="d-flex justify-content-between align-items-center px-3 py-2"
+                                         style="border-bottom:1px solid rgba(255,255,255,.08);">
+                                        <span style="font-weight:600; color:#f1f5f9; font-size:.9rem;">🔔 Notificaciones</span>
+                                        <button class="btn btn-sm"
+                                                style="font-size:.72rem; color:#94a3b8; padding:.1rem .5rem;"
+                                                onclick="limpiarNotificaciones(); return false;">Limpiar todo</button>
+                                    </div>
+                                    <div id="notifList" style="max-height:340px; overflow-y:auto;">
+                                        <div id="notifVacio" class="text-center py-4"
+                                             style="color:#64748b; font-size:.85rem;">
+                                            Sin notificaciones nuevas
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" id="userMenuToggle">
+                                    👤 <span style="font-weight:600;">@User.Identity.Name?.Split(' ').FirstOrDefault()</span>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
+                                    <li class="px-3 py-2" style="font-size:.8rem;color:var(--text-dim);">
+                                        @User.Identity.Name
+                                    </li>
+                                    <li><hr class="dropdown-divider" style="border-color:var(--border-color);margin:.3rem 0;" /></li>
                                     <li>
                                         <form asp-controller="Account" asp-action="Logout" method="post">
                                             @Html.AntiForgeryToken()
-                                            <button class="dropdown-item" type="submit">Cerrar sesión</button>
+                                            <button class="dropdown-item" type="submit" id="btnLogout">🚪 Cerrar sesión</button>
                                         </form>
                                     </li>
                                 </ul>
@@ -61,8 +132,8 @@
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Account" asp-action="Login">Iniciar sesión</a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Account" asp-action="Register">Registrarse</a>
+                            <li class="nav-item ms-1">
+                                <a class="btn btn-primary btn-sm" asp-controller="Account" asp-action="Register">Registrarse</a>
                             </li>
                         }
                     </ul>
@@ -70,36 +141,92 @@
             </div>
         </nav>
     </header>
-
-    <div class="container">
+    <div class="container py-2">
         @if (TempData["Mensaje"] != null)
         {
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                @TempData["Mensaje"]
+            <div class="alert alert-success alert-dismissible fade show mt-3" role="alert" id="alertMensaje">
+                ✅ @TempData["Mensaje"]
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         }
         @if (TempData["Error"] != null)
         {
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                @TempData["Error"]
+            <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert" id="alertError">
+                ⚠️ @TempData["Error"]
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         }
-        <main role="main" class="pb-3">
+        <main role="main" class="pb-4">
             @RenderBody()
         </main>
     </div>
-
-    <footer class="border-top footer text-muted mt-4 py-3 bg-light">
+    <footer class="border-top footer py-3">
         <div class="container text-center">
-            &copy; @DateTime.Now.Year — FoodBook SS · ITLA · Programación 2
+            <span style="color:var(--text-dim);">
+                &copy; @DateTime.Now.Year — <strong style="color:var(--accent);">FoodBook SS</strong> · ITLA · Programación 2
+            </span>
         </div>
     </footer>
-
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+    @* ── Script de Notificaciones  ──────────────────────────────── *@
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+    <script>
+    (function () {
+        let totalNoLeidas = 0;
+        const iconos = { "Confirmación": "✅", "Cancelada": "❌", "Cancelación": "❌", "Pago": "💳", "Recordatorio": "🔔" };
+        function crearIcono(titulo) {
+            for (const [k, v] of Object.entries(iconos)) {
+                if (titulo.includes(k)) return v;
+            }
+            return "🔔";
+        }
+        function agregarNotificacion(titulo, cuerpo, hora) {
+            totalNoLeidas++;
+            const badge = document.getElementById('notifBadge');
+            if (badge) { badge.textContent = totalNoLeidas; badge.style.display = 'block'; }
+            const vacio = document.getElementById('notifVacio');
+            if (vacio) vacio.style.display = 'none';
+            const icono = crearIcono(titulo);
+            const item = document.createElement('div');
+            item.style.cssText = 'padding:.75rem 1rem; border-bottom:1px solid rgba(255,255,255,.06); cursor:default;';
+            item.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:.5rem;">
+                    <div style="flex:1;">
+                        <div style="font-weight:600; color:#f97316; font-size:.85rem; margin-bottom:.25rem;">${icono} ${titulo}</div>
+                        <div style="color:#94a3b8; font-size:.8rem; line-height:1.4;">${cuerpo}</div>
+                    </div>
+                    <span style="color:#475569; font-size:.7rem; white-space:nowrap; padding-top:.15rem;">hace ${hora}</span>
+                </div>`;
+            const lista = document.getElementById('notifList');
+            if (lista) lista.insertBefore(item, lista.firstChild);
+        }
+        window.limpiarNotificaciones = function () {
+            const lista = document.getElementById('notifList');
+            if (!lista) return;
+            Array.from(lista.children).forEach(c => { if (c.id !== 'notifVacio') c.remove(); });
+            const vacio = document.getElementById('notifVacio');
+            if (vacio) vacio.style.display = 'block';
+            totalNoLeidas = 0;
+            const badge = document.getElementById('notifBadge');
+            if (badge) badge.style.display = 'none';
+        };
+        async function pollNotificaciones() {
+            try {
+                const resp = await fetch('/Account/GetNotificaciones', { credentials: 'same-origin' });
+                if (!resp.ok) return;
+                const lista = await resp.json();
+                lista.forEach(n => agregarNotificacion(n.titulo, n.cuerpo, n.hora));
+            } catch (_) {  }
+        }
+        setTimeout(pollNotificaciones, 2000);
+        setInterval(pollNotificaciones, 8000);
+    })();
+    </script>
+    }
 </body>
 </html>
+

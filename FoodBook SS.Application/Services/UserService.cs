@@ -1,4 +1,4 @@
-﻿using FoodBook_SS.Application.Base;
+using FoodBook_SS.Application.Base;
 using FoodBook_SS.Application.Dtos.User;
 using FoodBook_SS.Application.Interfaces;
 using FoodBook_SS.Domain.Base;
@@ -111,12 +111,13 @@ namespace FoodBook_SS.Application.Services
 
         private static UserDto MapToDto(Usuario u) => new()
         {
-            Id = u.Id,
+            Id             = u.Id,
+            RolId          = u.RolId,
             NombreCompleto = $"{u.Nombre} {u.Apellido}",
-            Email = u.Email,
-            Telefono = u.Telefono,
-            Rol = u.Rol?.Nombre ?? string.Empty,
-            Activo = u.Activo
+            Email          = u.Email,
+            Telefono       = u.Telefono,
+            Rol            = u.Rol?.Nombre ?? string.Empty,
+            Activo         = u.Activo
         };
     }
 }

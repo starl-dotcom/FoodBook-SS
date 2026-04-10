@@ -1,0 +1,82 @@
+<Page x:Class="FoodBook_SS.Desktop.Views.Propietario.MenuPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:conv="clr-namespace:FoodBook_SS.Desktop.Converters"
+      Title="Gestión de Menú" Background="{StaticResource BrBgDeep}">
+    <Page.Resources>
+        <conv:StringToVisibilityConverter x:Key="StrVis"/>
+    </Page.Resources>
+    <Grid Margin="28,20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="320"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0" Margin="0,0,20,0">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                <TextBlock Text="🍴 Menú del Restaurante" Style="{StaticResource H1}"/>
+                <Button Content="↻" Style="{StaticResource BtnSecondary}"
+                        Command="{Binding LoadCommand}" Margin="12,0,0,0" VerticalAlignment="Center" Padding="10,7"/>
+            </StackPanel>
+            <Border Background="#3B1515" CornerRadius="6" Padding="10,7" Margin="0,0,0,10"
+                    Visibility="{Binding ErrorMessage, Converter={StaticResource StrVis}}">
+                <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource BrDanger}"/>
+            </Border>
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Productos}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource Card}" Margin="0,0,0,8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Nombre}" Foreground="{StaticResource BrText}"
+                                                   FontWeight="Bold" FontSize="14"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                            <TextBlock Text="{Binding Categoria}"
+                                                       Foreground="{StaticResource BrTextDim}" FontSize="12"/>
+                                            <TextBlock Text="  ·  RD$" Foreground="{StaticResource BrTextDim}" FontSize="12"/>
+                                            <TextBlock Text="{Binding Precio, StringFormat='{}{0:N2}'}"
+                                                       Foreground="{StaticResource BrAccent}" FontSize="12" FontWeight="Bold"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" VerticalAlignment="Center"
+                                            Content="{Binding Disponible, Converter={x:Static conv:BoolToTextConverter.Instance}}"
+                                            Style="{StaticResource BtnSecondary}"
+                                            Command="{Binding DataContext.ToggleCommand,
+                                                RelativeSource={RelativeSource AncestorType=Page}}"
+                                            CommandParameter="{Binding}"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </StackPanel>
+        <Border Grid.Column="1" Style="{StaticResource Card}" VerticalAlignment="Top">
+            <StackPanel>
+                <TextBlock Text="➕ Nuevo Producto" Style="{StaticResource H2}" Margin="0,0,0,18"/>
+                <TextBlock Text="Categoría" Style="{StaticResource FormLabel}"/>
+                <ComboBox Style="{StaticResource DarkCombo}" Margin="0,0,0,12"
+                          ItemsSource="{Binding Categorias}"
+                          SelectedItem="{Binding CategoriaSelected}"
+                          DisplayMemberPath="Nombre"/>
+                <TextBlock Text="Nombre del Producto" Style="{StaticResource FormLabel}"/>
+                <TextBox Style="{StaticResource DarkInput}" Margin="0,0,0,12"
+                         Text="{Binding NombreProducto, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Text="Precio (RD$)" Style="{StaticResource FormLabel}"/>
+                <TextBox Style="{StaticResource DarkInput}" Margin="0,0,0,18"
+                         Text="{Binding Precio, UpdateSourceTrigger=PropertyChanged}"/>
+                <Border Background="#1A3B26" CornerRadius="6" Padding="10,7" Margin="0,0,0,10"
+                        Visibility="{Binding SuccessMessage, Converter={StaticResource StrVis}}">
+                    <TextBlock Text="{Binding SuccessMessage}" Foreground="{StaticResource BrSuccess}" FontSize="12"/>
+                </Border>
+                <Button Content="Guardar Producto" Style="{StaticResource BtnPrimary}"
+                        Command="{Binding CrearCommand}" HorizontalAlignment="Stretch"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Page>
+

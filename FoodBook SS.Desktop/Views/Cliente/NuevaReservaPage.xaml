@@ -1,0 +1,70 @@
+<Page x:Class="FoodBook_SS.Desktop.Views.Cliente.NuevaReservaPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Nueva Reserva" Background="{StaticResource BrBgDeep}">
+    <ScrollViewer>
+        <StackPanel Margin="30">
+            <TextBlock Text="➕ Nueva Reserva" Style="{StaticResource H1}"/>
+            <TextBlock Text="Reserva una mesa en tu restaurante favorito." Style="{StaticResource Body}" Margin="0,0,0,20"/>
+            <Border Style="{StaticResource Card}" Padding="20">
+                <StackPanel>
+                    <TextBlock Text="1. Restaurante Seleccionado" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
+                    <Border Background="#0F172A" BorderBrush="{StaticResource BrBorder}" BorderThickness="1" CornerRadius="8" Padding="10,8" Margin="0,0,0,20">
+                        <TextBlock Text="{Binding RestauranteSelected.Nombre}" Foreground="{StaticResource BrText}" FontWeight="Bold" FontSize="14" />
+                    </Border>
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="2. Fecha de la reserva" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
+                            <DatePicker SelectedDate="{Binding Fecha}"
+                                    Foreground="Black"
+                                    BorderBrush="{StaticResource BrBorder}" BorderThickness="1"
+                                    FontSize="13" FontFamily="Segoe UI" Padding="8,6"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="3. Hora de la reserva" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
+                            <ComboBox ItemsSource="{Binding HorariosDisponibles}"
+                                      SelectedItem="{Binding Hora}"
+                                      Style="{StaticResource DarkCombo}"/>
+                        </StackPanel>
+                    </Grid>
+                    <Grid Margin="0,0,0,24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="4. Número de Personas" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
+                            <TextBox Text="{Binding Personas}" Style="{StaticResource DarkInput}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
+                            <Button Content="🔍 Buscar Mesas Disponibles" Style="{StaticResource BtnSecondary}"
+                                    Command="{Binding BuscarMesasCommand}" HorizontalAlignment="Stretch"/>
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Text="5. Selecciona la Mesa" Style="{StaticResource FormLabel}" Margin="0,0,0,6"/>
+                    <ComboBox ItemsSource="{Binding Mesas}"
+                              SelectedItem="{Binding MesaSelected}"
+                              DisplayMemberPath="NumeroMesa"
+                              Style="{StaticResource DarkCombo}" Margin="0,0,0,24"/>
+                    <Border Background="#3B1515" CornerRadius="6" Padding="10,7" Margin="0,0,0,10"
+                            Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibility}, FallbackValue=Collapsed}">
+                        <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource BrDanger}" FontSize="12" TextWrapping="Wrap"/>
+                    </Border>
+                    <Border Background="#1A3B26" CornerRadius="6" Padding="10,7" Margin="0,0,0,10"
+                            Visibility="{Binding SuccessMessage, Converter={StaticResource StringToVisibility}, FallbackValue=Collapsed}">
+                        <TextBlock Text="{Binding SuccessMessage}" Foreground="{StaticResource BrSuccess}" FontSize="12" TextWrapping="Wrap"/>
+                    </Border>
+                    <Button Content="Confirmar Reserva" Style="{StaticResource BtnPrimary}"
+                            Command="{Binding ReservarCommand}" HorizontalAlignment="Stretch"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
+

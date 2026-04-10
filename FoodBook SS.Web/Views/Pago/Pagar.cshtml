@@ -1,0 +1,107 @@
+@model FoodBook_SS.Web.Models.PagoViewModel
+@{
+    ViewData["Title"] = "Procesar Pago";
+    var orden = Model.Orden;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+
+        <div class="page-header">
+            <h2>💳 Procesar Pago</h2>
+        </div>
+
+        @* Resumen de la orden *@
+        @if (orden != null)
+        {
+            <div class="card mb-4">
+                <div class="card-header">Resumen de la Orden <code>#@orden.Id</code></div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between py-1 text-muted" style="font-size:.875rem;">
+                        <span>Restaurante</span>
+                        <span>@(orden.Restaurante?.Nombre ?? "—")</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 text-muted" style="font-size:.875rem;">
+                        <span>Subtotal</span>
+                        <span>RD$ @orden.Subtotal.ToString("N2")</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 text-muted" style="font-size:.875rem;">
+                        <span>ITBIS (18%)</span>
+                        <span>RD$ @orden.Impuesto.ToString("N2")</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-3 border-top" style="border-color:var(--border-color)!important;">
+                        <strong style="font-size:1.1rem;">Total a Pagar</strong>
+                        <strong style="font-size:1.3rem;color:var(--accent);">RD$ @orden.Total.ToString("N2")</strong>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @* Formulario de pago *@
+        <div class="card shadow-glow">
+            <div class="card-header">Datos del Pago</div>
+            <div class="card-body p-4">
+                <form asp-action="Pagar" method="post" id="formPago">
+                    @Html.AntiForgeryToken()
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-3"></div>
+
+                    <input asp-for="PagoDto.OrdenId" type="hidden" />
+                    <input asp-for="PagoDto.Monto"   type="hidden" />
+
+                    <div class="mb-4">
+                        <label class="form-label" for="MetodoPago">Método de Pago</label>
+                        <select asp-for="PagoDto.MetodoPago" class="form-select" id="MetodoPago" required>
+                            <option value="">— Seleccionar método —</option>
+                            <option value="Efectivo">💵 Efectivo</option>
+                            <option value="Tarjeta de Crédito">💳 Tarjeta de Crédito</option>
+                            <option value="Tarjeta de Débito">🏦 Tarjeta de Débito</option>
+                            <option value="Transferencia">📲 Transferencia Bancaria</option>
+                        </select>
+                        <span asp-validation-for="PagoDto.MetodoPago" class="text-danger small"></span>
+                    </div>
+
+                    @* Código de autorización — visible solo para tarjeta/transferencia *@
+                    <div class="mb-4" id="autorizacionGroup" style="display:none;">
+                        <label class="form-label" for="codigoAutorizacion">
+                            Código de Autorización
+                            <small class="text-muted fw-normal">(requerido para tarjeta/transferencia)</small>
+                        </label>
+                        <input type="text" id="codigoAutorizacion"
+                               class="form-control"
+                               placeholder="Ej: AUTH-2024-XXXXX"
+                               maxlength="50" />
+                    </div>
+
+                    <div class="d-flex gap-2 pt-2">
+                        <button type="submit" class="btn btn-primary flex-fill" id="btnConfirmarPago">
+                            ✅ Confirmar Pago
+                        </button>
+                        <a asp-controller="Orden" asp-action="Index"
+                           class="btn btn-outline-secondary" id="btnCancelarPago">Cancelar</a>
+                    </div>
+
+                    <p class="text-muted mt-3 mb-0" style="font-size:.78rem;text-align:center;">
+                        🔒 El pago será procesado mediante <strong>sp_RegistrarPago</strong>
+                    </p>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+<script>
+    const metodoSelect = document.getElementById('MetodoPago');
+    const authGroup    = document.getElementById('autorizacionGroup');
+    const authInput    = document.getElementById('codigoAutorizacion');
+
+    metodoSelect.addEventListener('change', function () {
+        const requiereAuth = ['Tarjeta de Crédito','Tarjeta de Débito','Transferencia'].includes(this.value);
+        authGroup.style.display = requiereAuth ? 'block' : 'none';
+        authInput.required = requiereAuth;
+    });
+</script>
+}

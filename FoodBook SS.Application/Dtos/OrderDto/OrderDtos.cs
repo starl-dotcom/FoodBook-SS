@@ -1,4 +1,4 @@
-﻿using FoodBook_SS.Application.Base;
+using FoodBook_SS.Application.Base;
 
 namespace FoodBook_SS.Application.Dtos.Order
 {
@@ -18,6 +18,8 @@ namespace FoodBook_SS.Application.Dtos.Order
         public decimal Subtotal { get; set; }
         public decimal Impuesto { get; set; }
         public decimal Total { get; set; }
+        public DateTime FechaOrden { get; set; }
+        public string? Notas { get; set; }
         public List<OrderItemDto> Items { get; set; } = new();
     }
 
@@ -34,5 +36,19 @@ namespace FoodBook_SS.Application.Dtos.Order
         public int ProductoId { get; set; }
         public int Cantidad { get; set; }
         public string? Notas { get; set; }
+    }
+
+    public class VentaFechaDto
+    {
+        public DateOnly Fecha { get; set; }
+        public decimal TotalVentas { get; set; }
+        public int Ordenes { get; set; }
+    }
+
+    public class ProductoMasOrdenadoDto
+    {
+        public int ProductoId { get; set; }
+        public string NombreProducto { get; set; } = string.Empty;
+        public int TotalVendido { get; set; }
     }
 }
